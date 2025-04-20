@@ -25,42 +25,42 @@ class JSBonsai {
     // Character mappings
     chars = {
         // Trunk and branch characters
-        trunks: ['|', '/', '\\', 'Y', 'V', 'v', '^', '<', '>', 'i'],
+        trunks: ['|', '/', '//', 'Y', 'V', 'v', '^', '<', '>', 'i'],
         // Branch joint characters
-        joints: ['/', '\\', 'v', '>', '<', '^', 'Y', 'V', 'y', 'T', 't', 'x', 'X', '+'],
+        joints: ['/', '//', 'v', '>', '<', '^', 'Y', 'V', 'y', 'T', 't', 'x', 'X', '+'],
         // Branch strings based on direction - matching cbonsai's implementation
         branchStrings: {
             trunk: {
                 straightHorizontal: "/~",
-                leftDiagonal: "\\|",
-                vertical: "/|\\",
+                leftDiagonal: "//|",
+                vertical: "/|//",
                 rightDiagonal: "|/"
             },
             shootLeft: {
-                down: "\\",
-                horizontal: "\\_",
-                leftDiagonal: "\\|",
+                down: "//",
+                horizontal: "//_",
+                leftDiagonal: "//|",
                 vertical: "/|",
                 rightDiagonal: "/"
             },
             shootRight: {
                 down: "/",
                 horizontal: "_/",
-                leftDiagonal: "\\|",
+                leftDiagonal: "//|",
                 vertical: "/|",
                 rightDiagonal: "/"
             }
         },
         // Dead branch characters
-        deadChars: ['\'', '`', '.', ',', '_'],
+        deadChars: ['/', '`', '.', ',', '_'],
         // Base styles - adapted from cbonsai.c
         bases: [
             [], // Base 0 - no base
             [   // Base 1 - pot with dirt and grass
-                ":__________./~~~\\.__________:",
-                " \\                         /",
-                "  \\________________________/",
-                "  (_) (_)             (_) (_)"
+                ":__________./~~~~~\\.__________:",
+                " \\                           /",
+                "  \\________________________ /",
+                "  (_)                     (_)"
             ],
             [   // Base 2 - simple round pot
                 "(_---_./~~~\\._---_)",
@@ -376,7 +376,7 @@ class JSBonsai {
         // Place the trunk character just above the base
         const trunkY = startY - (this.options.base > 0 ? this.chars.bases[this.options.base].length : 0);
         
-        // Start growing the tree from the trunk - initial direction is upward
+        // Build the tree structure first
         this.growBranch(startX, trunkY, 0, -1, this.branchTypes.TRUNK, this.options.life);
         
         // Add the message if specified
@@ -384,8 +384,11 @@ class JSBonsai {
             this.addMessage();
         }
         
-        // If live mode is not enabled, render once at the end
-        if (!this.options.live) {
+        // If in live mode, animate the rendering
+        if (this.options.live) {
+            this.animateTreeRendering();
+        } else {
+            // Render once at the end
             this.render();
         }
         
@@ -395,6 +398,63 @@ class JSBonsai {
         }
         
         this.isGrowing = false;
+    }
+
+    /**
+     * Animate the tree rendering in live mode
+     */
+    animateTreeRendering() {
+        // Create a copy of the completed tree for animation
+        const completedTree = JSON.parse(JSON.stringify(this.tree));
+        
+        // Reset the visible tree to empty
+        const rows = this.tree.length;
+        const cols = this.tree[0].length;
+        this.tree = Array(rows).fill().map(() => Array(cols).fill(' '));
+        
+        // Create a flat list of all cells to animate
+        const cellsToAnimate = [];
+        
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const cell = completedTree[y][x];
+                if (typeof cell === 'object' && cell.char && cell.char !== ' ') {
+                    cellsToAnimate.push({
+                        x, 
+                        y, 
+                        cell,
+                        // Prioritize trunk and branches over leaves
+                        isPriority: cell.color === this.colors.branch
+                    });
+                }
+            }
+        }
+        
+        // Sort the cells from bottom to top (higher y values first)
+        // Within the same y-coordinate, branches come before leaves
+        cellsToAnimate.sort((a, b) => {
+            // First sort by y-coordinate (descending - bottom to top)
+            if (b.y !== a.y) {
+                return b.y - a.y;
+            }
+            
+            // For cells in the same row, branches come before leaves
+            if (a.isPriority && !b.isPriority) return -1;
+            if (!a.isPriority && b.isPriority) return 1;
+            
+            // For cells with the same priority, they can be ordered from left to right
+            return a.x - b.x;
+        });
+        
+        // Animate each cell with a timeout
+        cellsToAnimate.forEach((item, index) => {
+            const timeout = setTimeout(() => {
+                this.tree[item.y][item.x] = item.cell;
+                this.render();
+            }, index * (this.options.time * 1000));
+            
+            this.timeouts.push(timeout);
+        });
     }
 
     /**
@@ -573,29 +633,12 @@ class JSBonsai {
             
             // Set the character on the display if within bounds
             if (y >= 0 && y < this.tree.length && x >= 0 && x < this.tree[0].length) {
-                // Check if we should render immediately or add with a delay
-                if (this.options.live) {
-                    const delay = this.timeouts.length * (this.options.time * 1000);
-                    
-                    const timeout = setTimeout(() => {
-                        this.tree[y][x] = { char: branchStr, color };
-                        this.render();
-                    }, delay);
-                    
-                    this.timeouts.push(timeout);
-                } else {
-                    this.tree[y][x] = { char: branchStr, color };
-                }
+                this.tree[y][x] = { char: branchStr, color };
             }
             
             // Add leaves for non-trunk branches with a certain probability
             if (branchType !== this.branchTypes.TRUNK && Math.random() < 0.25) {
                 this.addLeaf(x, y);
-            }
-            
-            // Render changes if not in live mode and occasionally
-            if (!this.options.live && life % 5 === 0) {
-                this.render();
             }
         }
     }
@@ -642,24 +685,10 @@ class JSBonsai {
                     // Select a random leaf character
                     const leafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
                     
-                    if (this.options.live) {
-                        const delay = (this.timeouts.length) * (this.options.time * 1000);
-                        
-                        const timeout = setTimeout(() => {
-                            this.tree[leafY][leafX] = { 
-                                char: leafChar, 
-                                color: this.colors.leaf 
-                            };
-                            this.render();
-                        }, delay);
-                        
-                        this.timeouts.push(timeout);
-                    } else {
-                        this.tree[leafY][leafX] = { 
-                            char: leafChar, 
-                            color: this.colors.leaf 
-                        };
-                    }
+                    this.tree[leafY][leafX] = { 
+                        char: leafChar, 
+                        color: this.colors.leaf 
+                    };
                     
                     // Sometimes add additional leaves nearby to create clusters
                     if (Math.random() < 0.3) {
@@ -679,24 +708,10 @@ class JSBonsai {
                                 
                                 const secondaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
                                 
-                                if (this.options.live) {
-                                    const secondaryDelay = (this.timeouts.length) * (this.options.time * 1000);
-                                    
-                                    const secondaryTimeout = setTimeout(() => {
-                                        this.tree[secondaryLeafY][secondaryLeafX] = { 
-                                            char: secondaryLeafChar, 
-                                            color: this.colors.leaf 
-                                        };
-                                        this.render();
-                                    }, secondaryDelay);
-                                    
-                                    this.timeouts.push(secondaryTimeout);
-                                } else {
-                                    this.tree[secondaryLeafY][secondaryLeafX] = { 
-                                        char: secondaryLeafChar, 
-                                        color: this.colors.leaf 
-                                    };
-                                }
+                                this.tree[secondaryLeafY][secondaryLeafX] = { 
+                                    char: secondaryLeafChar, 
+                                    color: this.colors.leaf 
+                                };
                             }
                         }
                     }
@@ -721,24 +736,10 @@ class JSBonsai {
         // Add each character of the message
         for (let i = 0; i < this.options.message.length; i++) {
             if (x + i < this.tree[0].length) {
-                if (this.options.live) {
-                    const delay = this.timeouts.length * (this.options.time * 1000);
-                    
-                    const timeout = setTimeout(() => {
-                        this.tree[y][x + i] = { 
-                            char: this.options.message[i], 
-                            color: this.colors.message 
-                        };
-                        this.render();
-                    }, delay);
-                    
-                    this.timeouts.push(timeout);
-                } else {
-                    this.tree[y][x + i] = { 
-                        char: this.options.message[i], 
-                        color: this.colors.message 
-                    };
-                }
+                this.tree[y][x + i] = { 
+                    char: this.options.message[i], 
+                    color: this.colors.message 
+                };
             }
         }
     }
@@ -753,7 +754,15 @@ class JSBonsai {
         for (let row of this.tree) {
             for (let cell of row) {
                 if (typeof cell === 'object' && cell.char) {
-                    output += `<span style="color:${cell.color}">${cell.char}</span>`;
+                    // Make sure to HTML-escape any special characters
+                    const escapedChar = cell.char
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                    
+                    output += `<span style="color:${cell.color}">${escapedChar}</span>`;
                 } else {
                     output += cell;
                 }
