@@ -1,0 +1,122 @@
+/* General page styling */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: monospace;
+    line-height: 1.6;
+    background-color: #222;
+    color: #eee;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header, footer {
+    text-align: center;
+    padding: 20px 0;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+h1 {
+    margin-bottom: 10px;
+    color: #4e9a06;
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #4e9a06;
+}
+
+a {
+    color: #6c9eea;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+}
+
+/* Bonsai container styling */
+#js-bonsai {
+    background-color: #000;
+    color: #4a5;
+    padding: 20px;
+    border-radius: 5px;
+    width: 100%;
+    min-height: 500px;
+    overflow: auto;
+    white-space: pre;
+    font-family: monospace;
+    line-height: 1.2;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+/* Options styling */
+.options {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #333;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 1px solid #444;
+}
+
+.option-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.option-group {
+    margin-bottom: 15px;
+}
+
+.option-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #ccc;
+}
+
+button, select, input {
+    font-family: monospace;
+    padding: 8px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #444;
+    color: #eee;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+button {
+    cursor: pointer;
+    background-color: #4a5;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #3a4;
+} 
