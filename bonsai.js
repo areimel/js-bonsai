@@ -13,19 +13,20 @@ class JSBonsai {
         screensaver: false,  // Screensaver mode (equivalent to live + infinite)
         message: '',         // Attach message next to the tree
         base: 1,             // ASCII-art plant base to use (0 is none)
-        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ','], // List of characters for leaves
+        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ',', 'o', 'O', '0', '#', '%', '$', 'v', 'V', 'x'], // Enhanced leaves list
         multiplier: 5,       // Branch multiplier (0-20)
         life: 32,            // Life (0-200)
         print: true,         // Print tree when finished
         seed: null,          // Random seed
         verbose: false,      // Increase output verbosity
-        container: 'js-bonsai' // ID of container element
+        container: 'js-bonsai', // ID of container element
+        theme: 'default'     // Color theme for the tree
     };
 
     // Character mappings
     chars = {
         // Trunk and branch characters
-        trunks: ['|', '/', '//', 'Y', 'V', 'v', '^', '<', '>', 'i'],
+        trunks: ['|', '/', '||', 'Y', 'V', 'v', '^', '<', '>', 'H'],
         // Branch joint characters
         joints: ['/', '//', 'v', '>', '<', '^', 'Y', 'V', 'y', 'T', 't', 'x', 'X', '+'],
         // Branch strings based on direction - matching cbonsai's implementation
@@ -33,19 +34,19 @@ class JSBonsai {
             trunk: {
                 straightHorizontal: "/~",
                 leftDiagonal: "//|",
-                vertical: "/|//",
+                vertical: "/|/",
                 rightDiagonal: "|/"
             },
             shootLeft: {
                 down: "//",
-                horizontal: "//_",
+                horizontal: "//=",
                 leftDiagonal: "//|",
                 vertical: "/|",
                 rightDiagonal: "/"
             },
             shootRight: {
                 down: "/",
-                horizontal: "_/",
+                horizontal: "=/",
                 leftDiagonal: "//|",
                 vertical: "/|",
                 rightDiagonal: "/"
@@ -105,6 +106,10 @@ class JSBonsai {
         shootCounter: 0
     };
 
+    // CSS class prefix to prevent conflicts
+    classPrefix = 'js-bonsai-';
+    cssInjected = false;
+
     /**
      * Constructor for JSBonsai
      * @param {Object} options - Configuration options
@@ -137,6 +142,9 @@ class JSBonsai {
         
         // Initialize the random seed if provided
         this.initializeRandomSeed();
+        
+        // Generate and inject CSS
+        this.injectCSS();
         
         // Start growing the tree
         this.start();
@@ -412,46 +420,69 @@ class JSBonsai {
         const cols = this.tree[0].length;
         this.tree = Array(rows).fill().map(() => Array(cols).fill(' '));
         
-        // Create a flat list of all cells to animate
-        const cellsToAnimate = [];
+        // Group cells into three categories: base, branches, and leaves
+        const baseElements = [];
+        const branchElements = [];
+        const leafElements = [];
         
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
                 const cell = completedTree[y][x];
                 if (typeof cell === 'object' && cell.char && cell.char !== ' ') {
-                    cellsToAnimate.push({
-                        x, 
-                        y, 
-                        cell,
-                        // Prioritize trunk and branches over leaves
-                        isPriority: cell.color === this.colors.branch
-                    });
+                    // Categorize elements based on their color
+                    if (cell.color === this.colors.base || cell.color === this.colors.dirt) {
+                        baseElements.push({ x, y, cell });
+                    } else if (cell.color === this.colors.branch) {
+                        branchElements.push({ x, y, cell });
+                    } else {
+                        leafElements.push({ x, y, cell });
+                    }
                 }
             }
         }
         
-        // Sort the cells from bottom to top (higher y values first)
-        // Within the same y-coordinate, branches come before leaves
-        cellsToAnimate.sort((a, b) => {
-            // First sort by y-coordinate (descending - bottom to top)
-            if (b.y !== a.y) {
-                return b.y - a.y;
+        // Sort base elements from bottom to top
+        baseElements.sort((a, b) => b.y - a.y);
+        
+        // Sort branch elements from bottom to top
+        branchElements.sort((a, b) => b.y - a.y);
+        
+        // Sort leaf elements from bottom to top
+        leafElements.sort((a, b) => b.y - a.y);
+        
+        // Combine the phases in order: base -> branches -> leaves
+        const animationSequence = [...baseElements, ...branchElements, ...leafElements];
+        
+        // Calculate phase transition delays
+        const timePerElement = this.options.time * 1000; // ms per element
+        const basePhaseEndTime = baseElements.length * timePerElement;
+        const branchPhaseEndTime = basePhaseEndTime + (branchElements.length * timePerElement);
+        
+        // Add a small pause between phases for visual effect
+        const phasePause = 300; // ms
+        
+        // Animate each element with appropriate timing
+        animationSequence.forEach((item, index) => {
+            let delay;
+            
+            // Calculate delay based on the phase
+            if (index < baseElements.length) {
+                // Base phase elements
+                delay = index * timePerElement;
+            } else if (index < baseElements.length + branchElements.length) {
+                // Branch phase elements - start after base phase + pause
+                const branchIndex = index - baseElements.length;
+                delay = basePhaseEndTime + phasePause + (branchIndex * timePerElement);
+            } else {
+                // Leaf phase elements - start after branch phase + pause
+                const leafIndex = index - (baseElements.length + branchElements.length);
+                delay = branchPhaseEndTime + phasePause + (leafIndex * timePerElement);
             }
             
-            // For cells in the same row, branches come before leaves
-            if (a.isPriority && !b.isPriority) return -1;
-            if (!a.isPriority && b.isPriority) return 1;
-            
-            // For cells with the same priority, they can be ordered from left to right
-            return a.x - b.x;
-        });
-        
-        // Animate each cell with a timeout
-        cellsToAnimate.forEach((item, index) => {
             const timeout = setTimeout(() => {
                 this.tree[item.y][item.x] = item.cell;
                 this.render();
-            }, index * (this.options.time * 1000));
+            }, delay);
             
             this.timeouts.push(timeout);
         });
@@ -515,20 +546,12 @@ class JSBonsai {
                     const col = baseStartX + j;
                     
                     if (col >= 0 && col < this.tree[0].length) {
-                        // Determine color based on character type
-                        let color = this.colors.base;
                         const char = baseRow[j];
                         
-                        // Color specific parts differently
-                        if (char === '.' || char === '~') {
-                            color = this.colors.grass; // Green for grass/plants
-                        } else if (char === '/') {
-                            color = this.colors.dirt; // Brown for dirt
-                        }
-                        
                         this.tree[row][col] = {
-                            char: baseRow[j],
-                            color: color
+                            char: char,
+                            type: 'base',
+                            cssClass: this.getBaseClasses(char)
                         };
                     }
                 }
@@ -572,18 +595,36 @@ class JSBonsai {
             
             // Near-dead branches should branch into leaves
             if (life < 3) {
-                this.growBranch(x, y, dx, adjustedDy, this.branchTypes.DEAD, life);
+                // Create multiple leaf branches to make foliage denser
+                for (let i = 0; i < 3; i++) {
+                    // Randomize direction slightly for each leaf branch
+                    const leafDx = dx + (Math.floor(Math.random() * 3) - 1);
+                    const leafDy = adjustedDy + (Math.floor(Math.random() * 3) - 1);
+                    this.growBranch(x, y, leafDx, leafDy, this.branchTypes.DEAD, life);
+                }
             }
             
             // Dying trunk should branch into leaves
             else if (branchType === this.branchTypes.TRUNK && life < (this.options.multiplier + 2)) {
-                this.growBranch(x, y, dx, adjustedDy, this.branchTypes.DYING, life);
+                // Create multiple leaf branches to make foliage denser
+                for (let i = 0; i < 2; i++) {
+                    // Randomize direction slightly for each leaf branch
+                    const leafDx = dx + (Math.floor(Math.random() * 3) - 1);
+                    const leafDy = adjustedDy + (Math.floor(Math.random() * 2) - 1);
+                    this.growBranch(x, y, leafDx, leafDy, this.branchTypes.DYING, life);
+                }
             }
             
             // Dying shoots should branch into leaves
             else if ((branchType === this.branchTypes.SHOOT_LEFT || branchType === this.branchTypes.SHOOT_RIGHT) 
                      && life < (this.options.multiplier + 2)) {
-                this.growBranch(x, y, dx, adjustedDy, this.branchTypes.DYING, life);
+                // Create multiple leaf branches to make foliage denser
+                for (let i = 0; i < 2; i++) {
+                    // Randomize direction slightly for each leaf branch
+                    const leafDx = dx + (Math.floor(Math.random() * 3) - 1);
+                    const leafDy = adjustedDy + (Math.floor(Math.random() * 2) - 1);
+                    this.growBranch(x, y, leafDx, leafDy, this.branchTypes.DYING, life);
+                }
             }
             
             // Trunk should re-branch randomly or at regular intervals
@@ -629,15 +670,26 @@ class JSBonsai {
             
             // Choose the branch character string based on type and direction
             const branchStr = this.chooseString(branchType, life, dx, adjustedDy);
-            const color = this.colors.branch;
             
             // Set the character on the display if within bounds
             if (y >= 0 && y < this.tree.length && x >= 0 && x < this.tree[0].length) {
-                this.tree[y][x] = { char: branchStr, color };
+                this.tree[y][x] = {
+                    char: branchStr,
+                    type: branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD ? 'leaf' : 'branch',
+                    branchType: branchType,
+                    direction: { dx, dy: adjustedDy },
+                    cssClass: branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD ? 
+                        this.getLeafClasses() : 
+                        this.getBranchClasses(branchType, dx, adjustedDy)
+                };
             }
             
-            // Add leaves for non-trunk branches with a certain probability
-            if (branchType !== this.branchTypes.TRUNK && Math.random() < 0.25) {
+            // Add leaves - increased probability and add to all branch types
+            if (branchType !== this.branchTypes.TRUNK && Math.random() < 0.40) {
+                // Higher probability for non-trunk branches (was 0.25)
+                this.addLeaf(x, y);
+            } else if (branchType === this.branchTypes.TRUNK && Math.random() < 0.15) {
+                // Add some leaves to trunk branches too
                 this.addLeaf(x, y);
             }
         }
@@ -650,8 +702,8 @@ class JSBonsai {
      */
     addLeaf(x, y) {
         // Try placing leaves in multiple positions around the branch
-        // to create a more natural look
-        for (let attempts = 0; attempts < 4; attempts++) {
+        // to create a more natural look - increased from 4 to 6 attempts
+        for (let attempts = 0; attempts < 6; attempts++) {
             // Random offset for the leaf, with bias toward upper positions
             // (negative y values in our coordinate system)
             let offsetX, offsetY;
@@ -686,12 +738,14 @@ class JSBonsai {
                     const leafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
                     
                     this.tree[leafY][leafX] = { 
-                        char: leafChar, 
-                        color: this.colors.leaf 
+                        char: leafChar,
+                        type: 'leaf',
+                        cssClass: this.getLeafClasses()
                     };
                     
                     // Sometimes add additional leaves nearby to create clusters
-                    if (Math.random() < 0.3) {
+                    // Increased probability from 0.3 to 0.5
+                    if (Math.random() < 0.5) {
                         // Try to place a secondary leaf
                         const secondaryOffsetX = Math.floor(Math.random() * 3) - 1;
                         const secondaryOffsetY = Math.floor(Math.random() * 3) - 1;
@@ -709,8 +763,35 @@ class JSBonsai {
                                 const secondaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
                                 
                                 this.tree[secondaryLeafY][secondaryLeafX] = { 
-                                    char: secondaryLeafChar, 
-                                    color: this.colors.leaf 
+                                    char: secondaryLeafChar,
+                                    type: 'leaf',
+                                    cssClass: this.getLeafClasses()
+                                };
+                            }
+                        }
+                    }
+                    
+                    // Add tertiary leaves occasionally to create fuller clusters
+                    if (Math.random() < 0.3) {
+                        const tertiaryOffsetX = Math.floor(Math.random() * 3) - 1;
+                        const tertiaryOffsetY = Math.floor(Math.random() * 3) - 1;
+                        
+                        const tertiaryLeafX = leafX + tertiaryOffsetX;
+                        const tertiaryLeafY = leafY + tertiaryOffsetY;
+                        
+                        if (tertiaryLeafX >= 0 && tertiaryLeafX < this.tree[0].length &&
+                            tertiaryLeafY >= 0 && tertiaryLeafY < this.tree.length) {
+                            
+                            if (this.tree[tertiaryLeafY][tertiaryLeafX] === ' ' || 
+                                (typeof this.tree[tertiaryLeafY][tertiaryLeafX] === 'object' && 
+                                 this.tree[tertiaryLeafY][tertiaryLeafX].char === ' ')) {
+                                
+                                const tertiaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                                
+                                this.tree[tertiaryLeafY][tertiaryLeafX] = { 
+                                    char: tertiaryLeafChar,
+                                    type: 'leaf',
+                                    cssClass: this.getLeafClasses()
                                 };
                             }
                         }
@@ -737,8 +818,9 @@ class JSBonsai {
         for (let i = 0; i < this.options.message.length; i++) {
             if (x + i < this.tree[0].length) {
                 this.tree[y][x + i] = { 
-                    char: this.options.message[i], 
-                    color: this.colors.message 
+                    char: this.options.message[i],
+                    type: 'message',
+                    cssClass: this.getMessageClasses()
                 };
             }
         }
@@ -750,7 +832,7 @@ class JSBonsai {
     render() {
         let output = '';
         
-        // Convert the 2D array to a string with colored spans
+        // Convert the 2D array to a string with classed spans
         for (let row of this.tree) {
             for (let cell of row) {
                 if (typeof cell === 'object' && cell.char) {
@@ -762,7 +844,7 @@ class JSBonsai {
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#039;');
                     
-                    output += `<span style="color:${cell.color}">${escapedChar}</span>`;
+                    output += `<span class="${cell.cssClass}">${escapedChar}</span>`;
                 } else {
                     output += cell;
                 }
@@ -976,6 +1058,139 @@ class JSBonsai {
         }
         
         return { dx, dy };
+    }
+
+    /**
+     * Generate and inject CSS for elements
+     */
+    injectCSS() {
+        // Don't inject CSS multiple times
+        if (this.cssInjected) return;
+        
+        // Create a style element
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.id = `${this.classPrefix}style`;
+        
+        // Build CSS rules
+        let css = `
+            .${this.classPrefix}element {
+                display: inline-block;
+                white-space: pre;
+            }
+            .${this.classPrefix}trunk {
+                color: ${this.colors.trunk};
+            }
+            .${this.classPrefix}branch {
+                color: ${this.colors.branch};
+            }
+            .${this.classPrefix}leaf {
+                color: ${this.colors.leaf};
+            }
+            .${this.classPrefix}base {
+                color: ${this.colors.base};
+            }
+            .${this.classPrefix}dirt {
+                color: ${this.colors.dirt};
+            }
+            .${this.classPrefix}grass {
+                color: ${this.colors.grass};
+            }
+            .${this.classPrefix}message {
+                color: ${this.colors.message};
+            }
+        `;
+        
+        // Add CSS to the style element
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        
+        // Add the style element to the document head
+        document.head.appendChild(style);
+        this.cssInjected = true;
+    }
+
+    /**
+     * Get CSS classes for a branch element
+     * @param {number} branchType - Type of branch
+     * @param {number} dx - X direction
+     * @param {number} dy - Y direction
+     * @returns {string} - CSS classes for this branch
+     */
+    getBranchClasses(branchType, dx, dy) {
+        let classes = [`${this.classPrefix}element`];
+        
+        // Base branch type class
+        if (branchType === this.branchTypes.TRUNK) {
+            classes.push(`${this.classPrefix}trunk`);
+        } else if (branchType === this.branchTypes.SHOOT_LEFT || branchType === this.branchTypes.SHOOT_RIGHT) {
+            classes.push(`${this.classPrefix}branch`);
+        } else if (branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD) {
+            classes.push(`${this.classPrefix}leaf`);
+            return classes.join(' '); // Return early for leaves
+        }
+        
+        // Add branch subtype
+        if (branchType === this.branchTypes.TRUNK) {
+            classes.push(`${this.classPrefix}trunk-main`);
+        } else if (branchType === this.branchTypes.SHOOT_LEFT) {
+            classes.push(`${this.classPrefix}shoot-left`);
+        } else if (branchType === this.branchTypes.SHOOT_RIGHT) {
+            classes.push(`${this.classPrefix}shoot-right`);
+        }
+        
+        // Add direction class
+        if (dy === 0) {
+            classes.push(`${this.classPrefix}horizontal`);
+        } else if (dx < 0 && dy < 0) {
+            classes.push(`${this.classPrefix}left-diagonal`);
+        } else if (dx === 0 && dy < 0) {
+            classes.push(`${this.classPrefix}vertical`);
+        } else if (dx > 0 && dy < 0) {
+            classes.push(`${this.classPrefix}right-diagonal`);
+        } else if (dy > 0) {
+            classes.push(`${this.classPrefix}down`);
+        }
+        
+        return classes.join(' ');
+    }
+
+    /**
+     * Get CSS classes for a base element
+     * @param {string} char - The character to check
+     * @returns {string} - CSS classes for this base element
+     */
+    getBaseClasses(char) {
+        let classes = [`${this.classPrefix}element`];
+        
+        if (char === '.' || char === '~') {
+            classes.push(`${this.classPrefix}grass`);
+        } else if (char === '/') {
+            classes.push(`${this.classPrefix}dirt`);
+        } else {
+            classes.push(`${this.classPrefix}base`);
+        }
+        
+        return classes.join(' ');
+    }
+
+    /**
+     * Get CSS classes for a leaf element
+     * @returns {string} - CSS classes for this leaf element
+     */
+    getLeafClasses() {
+        return `${this.classPrefix}element ${this.classPrefix}leaf`;
+    }
+
+    /**
+     * Get CSS classes for a message element
+     * @returns {string} - CSS classes for this message element
+     */
+    getMessageClasses() {
+        return `${this.classPrefix}element ${this.classPrefix}message`;
     }
 }
 
