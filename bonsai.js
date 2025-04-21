@@ -40,7 +40,7 @@ class JSBonsai {
             shootLeft: {
                 down: "//",
                 horizontal: "//=",
-                leftDiagonal: "//|",
+                leftDiagonal: "&#92;&#92;|",
                 vertical: "/|",
                 rightDiagonal: "/"
             },
@@ -225,23 +225,103 @@ class JSBonsai {
      * Create UI controls for the bonsai tree
      */
     createUI() {
-        const optionsContainer = document.querySelector('.option-controls');
-        if (!optionsContainer) return;
-
-        // Clear existing controls
-        optionsContainer.innerHTML = '';
-
+        // Get container elements for each option category
+        const liveOptionsContainer = document.getElementById('live-options');
+        const growthOptionsContainer = document.getElementById('growth-options');
+        const appearanceOptionsContainer = document.getElementById('appearance-options');
+        const advancedOptionsContainer = document.getElementById('advanced-options');
+        const controlButtonsContainer = document.getElementById('control-buttons');
+        
+        // If containers don't exist, try to use the legacy container
+        if (!liveOptionsContainer || !growthOptionsContainer || !appearanceOptionsContainer || 
+            !advancedOptionsContainer || !controlButtonsContainer) {
+            const optionsContainer = document.querySelector('.option-controls');
+            if (!optionsContainer) return;
+            
+            // Clear existing controls
+            optionsContainer.innerHTML = '';
+            
+            // Create legacy UI (fallback for compatibility)
+            this.createLegacyUI(optionsContainer);
+            return;
+        }
+        
+        // Clear existing controls in each container
+        liveOptionsContainer.innerHTML = '';
+        growthOptionsContainer.innerHTML = '';
+        appearanceOptionsContainer.innerHTML = '';
+        advancedOptionsContainer.innerHTML = '';
+        controlButtonsContainer.innerHTML = '';
+        
+        // Create Display Mode options
+        this.createCheckboxOption(liveOptionsContainer, 'live', 'Live Mode');
+        this.createNumberOption(liveOptionsContainer, 'time', 'Animation Speed (sec)', 0.01, 10, 0.01);
+        this.createCheckboxOption(liveOptionsContainer, 'infinite', 'Infinite Mode');
+        this.createNumberOption(liveOptionsContainer, 'wait', 'Wait Between Trees (sec)', 0.1, 20, 0.1);
+        this.createCheckboxOption(liveOptionsContainer, 'screensaver', 'Screensaver Mode');
+        
+        // Create Growth Parameters options
+        this.createNumberOption(growthOptionsContainer, 'multiplier', 'Branch Multiplier', 0, 20, 1);
+        this.createNumberOption(growthOptionsContainer, 'life', 'Life', 1, 200, 1);
+        
+        // Create Appearance options
+        this.createTextOption(appearanceOptionsContainer, 'message', 'Message');
+        this.createSelectOption(appearanceOptionsContainer, 'base', 'Base Style', [
+            { value: 0, label: 'None' },
+            { value: 1, label: 'Pot with soil' },
+            { value: 2, label: 'Simple pot' }
+        ]);
+        
+        // Create Advanced options
+        this.createNumberOption(advancedOptionsContainer, 'seed', 'Random Seed', 0, 9999, 1, true);
+        
+        // Create color palette
+        this.createColorPalette();
+        
+        // Create control buttons
+        const generateButton = document.createElement('button');
+        generateButton.textContent = 'Generate New Tree';
+        generateButton.addEventListener('click', () => {
+            this.clearTimeouts();
+            this.reset();
+            this.start();
+        });
+        
+        controlButtonsContainer.appendChild(generateButton);
+    }
+    
+    /**
+     * Legacy UI creation method (for backwards compatibility)
+     * @param {HTMLElement} container - The container element for the UI
+     */
+    createLegacyUI(container) {
         // Create controls for each option
-        this.createCheckboxOption(optionsContainer, 'live', 'Live Mode');
-        this.createNumberOption(optionsContainer, 'time', 'Time (seconds)', 0.01, 10, 0.01);
-        this.createCheckboxOption(optionsContainer, 'infinite', 'Infinite Mode');
-        this.createNumberOption(optionsContainer, 'wait', 'Wait Time (seconds)', 0.1, 20, 0.1);
-        this.createCheckboxOption(optionsContainer, 'screensaver', 'Screensaver Mode');
-        this.createTextOption(optionsContainer, 'message', 'Message');
-        this.createNumberOption(optionsContainer, 'multiplier', 'Branch Multiplier', 0, 20, 1);
-        this.createNumberOption(optionsContainer, 'life', 'Life', 1, 200, 1);
-        this.createNumberOption(optionsContainer, 'seed', 'Random Seed', 0, 9999, 1, true);
-
+        this.createCheckboxOption(container, 'live', 'Live Mode');
+        this.createNumberOption(container, 'time', 'Time (seconds)', 0.01, 10, 0.01);
+        this.createCheckboxOption(container, 'infinite', 'Infinite Mode');
+        this.createNumberOption(container, 'wait', 'Wait Time (seconds)', 0.1, 20, 0.1);
+        this.createCheckboxOption(container, 'screensaver', 'Screensaver Mode');
+        this.createTextOption(container, 'message', 'Message');
+        this.createNumberOption(container, 'multiplier', 'Branch Multiplier', 0, 20, 1);
+        this.createNumberOption(container, 'life', 'Life', 1, 200, 1);
+        this.createNumberOption(container, 'seed', 'Random Seed', 0, 9999, 1, true);
+        
+        // Create a color palette in legacy mode
+        const colorGroup = document.createElement('div');
+        colorGroup.className = 'option-group';
+        const colorLabel = document.createElement('label');
+        colorLabel.textContent = 'Color Palette';
+        colorGroup.appendChild(colorLabel);
+        container.appendChild(colorGroup);
+        
+        // Create a palette container inside the option group
+        const paletteContainer = document.createElement('div');
+        paletteContainer.id = 'color-palette';
+        colorGroup.appendChild(paletteContainer);
+        
+        // Generate the color palette
+        this.createColorPalette();
+        
         // Create a "Generate" button
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'option-group';
@@ -255,7 +335,7 @@ class JSBonsai {
         });
         
         buttonGroup.appendChild(generateButton);
-        optionsContainer.appendChild(buttonGroup);
+        container.appendChild(buttonGroup);
     }
 
     /**
@@ -333,6 +413,40 @@ class JSBonsai {
         
         group.appendChild(inputLabel);
         group.appendChild(input);
+        container.appendChild(group);
+    }
+
+    /**
+     * Create a select option in the UI
+     */
+    createSelectOption(container, name, label, options) {
+        const group = document.createElement('div');
+        group.className = 'option-group';
+        
+        const selectLabel = document.createElement('label');
+        selectLabel.htmlFor = `option-${name}`;
+        selectLabel.textContent = label;
+        
+        const select = document.createElement('select');
+        select.id = `option-${name}`;
+        
+        // Add options to select
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            if (this.options[name] === parseInt(opt.value)) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        select.addEventListener('change', (e) => {
+            this.options[name] = parseInt(e.target.value);
+        });
+        
+        group.appendChild(selectLabel);
+        group.appendChild(select);
         container.appendChild(group);
     }
 
@@ -1191,6 +1305,74 @@ class JSBonsai {
      */
     getMessageClasses() {
         return `${this.classPrefix}element ${this.classPrefix}message`;
+    }
+
+    /**
+     * Create a color palette display showing the colors used in the bonsai
+     */
+    createColorPalette() {
+        // Get the container for the color palette
+        const colorPaletteContainer = document.getElementById('color-palette');
+        if (!colorPaletteContainer) return;
+        
+        // Clear any existing content
+        colorPaletteContainer.innerHTML = '';
+        
+        // Create a flex container for the color swatches
+        const paletteDisplay = document.createElement('div');
+        paletteDisplay.className = 'color-palette-container';
+        
+        // Get unique colors (some are duplicates like trunk/branch and leaf/grass)
+        const uniqueColors = {};
+        
+        // Process each color in the colors object
+        for (const [key, value] of Object.entries(this.colors)) {
+            // Skip duplicates
+            if (!uniqueColors[value]) {
+                uniqueColors[value] = key;
+            } else if (uniqueColors[value] !== key) {
+                // If multiple elements use the same color, combine their names
+                uniqueColors[value] += `/${key}`;
+            }
+        }
+        
+        // Create a swatch for each unique color
+        for (const [color, label] of Object.entries(uniqueColors)) {
+            // Create the swatch element
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = color;
+            
+            // Add tooltip with the color hex value
+            swatch.title = color;
+            
+            // Add a label for the swatch
+            const swatchLabel = document.createElement('div');
+            swatchLabel.className = 'color-swatch-label';
+            swatchLabel.textContent = label;
+            
+            // Add click behavior to copy the color to clipboard
+            swatch.addEventListener('click', () => {
+                navigator.clipboard.writeText(color)
+                    .then(() => {
+                        // Show brief notification
+                        const originalTitle = swatch.title;
+                        swatch.title = 'Copied!';
+                        setTimeout(() => {
+                            swatch.title = originalTitle;
+                        }, 1000);
+                    });
+            });
+            
+            // Add the label to the swatch
+            swatch.appendChild(swatchLabel);
+            
+            // Add the swatch to the palette
+            paletteDisplay.appendChild(swatch);
+        }
+        
+        // Add the palette display to the container
+        colorPaletteContainer.appendChild(paletteDisplay);
     }
 }
 
