@@ -13,7 +13,6 @@ class JSBonsai {
         screensaver: false,  // Screensaver mode (equivalent to live + infinite)
         message: '',         // Attach message next to the tree
         base: 1,             // ASCII-art plant base to use (0 is none)
-        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ',', 'o', 'O', '0', '#', '%', '$', 'v', 'V', 'x'], // Enhanced leaves list
         multiplier: 5,       // Branch multiplier (0-20)
         life: 32,            // Life (0-200)
         print: true,         // Print tree when finished
@@ -30,6 +29,8 @@ class JSBonsai {
         trunks: ['|', '/', '||', 'Y', 'V', 'v', '^', '<', '>', 'H'],
         // Branch joint characters
         joints: ['/', '//', 'v', '>', '<', '^', 'Y', 'V', 'y', 'T', 't', 'x', 'X', '+'],
+        // Leaf characters
+        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ',', 'o', 'O', '0', '#', '%', '$', 'v', 'V', 'x'],
         // Branch strings based on direction - matching cbonsai's implementation
         branchStrings: {
             trunk: {
@@ -40,16 +41,16 @@ class JSBonsai {
             },
             shootLeft: {
                 down: "//",
-                horizontal: "//=",
-                leftDiagonal: "//|",
+                horizontal: "</=",
+                leftDiagonal: "//",
                 vertical: "/|",
                 rightDiagonal: "/"
             },
             shootRight: {
                 down: "/",
-                horizontal: "=/",
-                leftDiagonal: "//|",
-                vertical: "/|",
+                horizontal: "=/>",
+                leftDiagonal: "/|",
+                vertical: "||",
                 rightDiagonal: "/"
             }
         },
@@ -60,9 +61,9 @@ class JSBonsai {
             [], // Base 0 - no base
             [   // Base 1 - pot with dirt and grass
                 ":__________./~~~~~\\.__________:",
-                " \\                           /",
-                "  \\________________________ /",
-                "  (_)                     (_)"
+                " \\============================/",
+                "  \\==========================/ ",
+                "  (_)                      (_)  "
             ],
             [   // Base 2 - simple round pot
                 "(_---_./~~~\\._---_)",
@@ -80,7 +81,6 @@ class JSBonsai {
         leafLight: "#7bba2d", // Lighter green for variety
         leafDark: "#366804",  // Darker green for variety
         base: "#8a8a8a",     // Gray for base/pot
-        dirt: "#6d3300",     // Brown for soil
         grass: "#4e9a06",     // Green for grass in pot
         message: "#cccccc"   // Light gray for messages
     };
@@ -618,7 +618,7 @@ class JSBonsai {
                         leafElements.push({ x, y, cell });
                     }
                     // Third, check by color if type isn't explicit
-                    else if (cell.color === this.colors.base || cell.color === this.colors.dirt || cell.color === this.colors.grass) {
+                    else if (cell.color === this.colors.base || cell.color === this.colors.grass) {
                         baseElements.push({ x, y, cell });
                     } else if (cell.color === this.colors.branch || cell.color === this.colors.trunk) {
                         branchElements.push({ x, y, cell });
@@ -739,19 +739,19 @@ class JSBonsai {
                     if (col >= 0 && col < this.tree[0].length) {
                         const char = baseRow[j];
                         let color;
+                        let type = 'base';
                         
-                        // Determine the color based on the character
+                        // Only grass characters should be green, all other base elements should use base color
                         if (char === '.' || char === '~') {
                             color = this.colors.grass;
-                        } else if (char === '/') {
-                            color = this.colors.dirt;
+                            type = 'grass';
                         } else {
                             color = this.colors.base;
                         }
                         
                         this.tree[row][col] = {
                             char: char,
-                            type: 'base',
+                            type: type,
                             color: color,
                             cssClass: this.getBaseClasses(char)
                         };
@@ -944,7 +944,7 @@ class JSBonsai {
                     (typeof this.tree[leafY][leafX] === 'object' && this.tree[leafY][leafX].char === ' ')) {
                     
                     // Select a random leaf character
-                    const leafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                    const leafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
                     
                     // Select a random leaf color
                     const leafColor = this.getRandomLeafColor();
@@ -973,7 +973,7 @@ class JSBonsai {
                                 (typeof this.tree[secondaryLeafY][secondaryLeafX] === 'object' && 
                                  this.tree[secondaryLeafY][secondaryLeafX].char === ' ')) {
                                 
-                                const secondaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                                const secondaryLeafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
                                 const secondaryLeafColor = this.getRandomLeafColor();
                                 
                                 this.tree[secondaryLeafY][secondaryLeafX] = { 
@@ -1001,7 +1001,7 @@ class JSBonsai {
                                 (typeof this.tree[tertiaryLeafY][tertiaryLeafX] === 'object' && 
                                  this.tree[tertiaryLeafY][tertiaryLeafX].char === ' ')) {
                                 
-                                const tertiaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                                const tertiaryLeafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
                                 const tertiaryLeafColor = this.getRandomLeafColor();
                                 
                                 this.tree[tertiaryLeafY][tertiaryLeafX] = { 
@@ -1139,8 +1139,8 @@ class JSBonsai {
             case this.branchTypes.DYING:
             case this.branchTypes.DEAD:
                 // Use a random leaf character for dying/dead branches
-                const leafIndex = Math.floor(Math.random() * this.options.leaves.length);
-                branchStr = this.options.leaves[leafIndex];
+                const leafIndex = Math.floor(Math.random() * this.chars.leaves.length);
+                branchStr = this.chars.leaves[leafIndex];
                 break;
         }
         
@@ -1316,8 +1316,9 @@ class JSBonsai {
             .${this.classPrefix}base {
                 color: ${this.colors.base};
             }
-            .${this.classPrefix}dirt {
-                color: ${this.colors.dirt};
+            /* All base elements should use the base color */
+            [class*="${this.classPrefix}element"][class*="${this.classPrefix}base"] {
+                color: ${this.colors.base} !important;
             }
             .${this.classPrefix}grass {
                 color: ${this.colors.grass};
@@ -1394,8 +1395,6 @@ class JSBonsai {
         
         if (char === '.' || char === '~') {
             classes.push(`${this.classPrefix}grass`);
-        } else if (char === '/') {
-            classes.push(`${this.classPrefix}dirt`);
         } else {
             classes.push(`${this.classPrefix}base`);
         }
