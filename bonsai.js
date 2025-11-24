@@ -34,24 +34,24 @@ class JSBonsai {
         // Branch strings based on direction - matching cbonsai's implementation
         branchStrings: {
             trunk: {
-                straightHorizontal: "/~",
-                leftDiagonal: "//|",
-                vertical: "/|/",
-                rightDiagonal: "|/"
+                straightHorizontal: `\\~`,
+                leftDiagonal: `//`,
+                vertical: `/|\\`,
+                rightDiagonal: `\\`
             },
             shootLeft: {
                 down: "//",
                 horizontal: "</=",
                 leftDiagonal: "//",
-                vertical: "/|",
-                rightDiagonal: "/"
+                vertical: "||",
+                rightDiagonal: `\\`
             },
             shootRight: {
                 down: "/",
                 horizontal: "=/>",
                 leftDiagonal: "/|",
                 vertical: "||",
-                rightDiagonal: "/"
+                rightDiagonal: `\\`
             }
         },
         // Dead branch characters
