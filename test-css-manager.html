@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Manager Test - JS Bonsai</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border-left: 3px solid #4e9a06;
+        }
+        .pass { color: #4e9a06; }
+        .fail { color: #f44336; }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSS Manager Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import CONFIG from './src/config/index.js';
+        import { CSSManager } from './src/modules/css-manager.js';
+
+        const results = document.getElementById('results');
+        let passCount = 0;
+        let failCount = 0;
+
+        function test(name, condition, details = '') {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+
+            const status = condition ? '✓ PASS' : '✗ FAIL';
+            const statusClass = condition ? 'pass' : 'fail';
+
+            section.innerHTML = `
+                <strong class="${statusClass}">${status}</strong> ${name}
+                ${details ? `<pre>${details}</pre>` : ''}
+            `;
+
+            results.appendChild(section);
+
+            if (condition) {
+                passCount++;
+            } else {
+                failCount++;
+            }
+        }
+
+        // Create CSS Manager instance
+        const cssManager = new CSSManager(CONFIG);
+
+        // Test 1: CSSManager instance created
+        test('CSSManager instance created', cssManager instanceof CSSManager);
+
+        // Test 2: Check initial state
+        test(
+            'CSS not yet injected',
+            cssManager.cssInjected === false,
+            `cssInjected: ${cssManager.cssInjected}`
+        );
+
+        // Test 3: Inject CSS
+        cssManager.injectCSS();
+        const styleElement = document.getElementById('js-bonsai-style');
+        test(
+            'CSS style element created in document',
+            styleElement !== null,
+            `Element ID: ${styleElement?.id}`
+        );
+
+        // Test 4: CSS injected flag set
+        test(
+            'CSS injected flag set to true',
+            cssManager.cssInjected === true
+        );
+
+        // Test 5: Multiple injections don't duplicate
+        const initialStyleCount = document.querySelectorAll('#js-bonsai-style').length;
+        cssManager.injectCSS();
+        cssManager.injectCSS();
+        const finalStyleCount = document.querySelectorAll('#js-bonsai-style').length;
+        test(
+            'Multiple injectCSS calls don\'t duplicate styles',
+            initialStyleCount === finalStyleCount && finalStyleCount === 1,
+            `Style count: ${finalStyleCount}`
+        );
+
+        // Test 6: getBranchClasses for TRUNK
+        const trunkClasses = cssManager.getBranchClasses(CONFIG.branchTypes.TRUNK, 0, -1);
+        test(
+            'getBranchClasses for TRUNK vertical',
+            trunkClasses.includes('js-bonsai-trunk') && trunkClasses.includes('js-bonsai-vertical'),
+            trunkClasses
+        );
+
+        // Test 7: getBranchClasses for SHOOT_LEFT
+        const shootLeftClasses = cssManager.getBranchClasses(CONFIG.branchTypes.SHOOT_LEFT, -1, -1);
+        test(
+            'getBranchClasses for SHOOT_LEFT left-diagonal',
+            shootLeftClasses.includes('js-bonsai-branch') && shootLeftClasses.includes('js-bonsai-left-diagonal'),
+            shootLeftClasses
+        );
+
+        // Test 8: getBranchClasses for SHOOT_RIGHT
+        const shootRightClasses = cssManager.getBranchClasses(CONFIG.branchTypes.SHOOT_RIGHT, 1, -1);
+        test(
+            'getBranchClasses for SHOOT_RIGHT right-diagonal',
+            shootRightClasses.includes('js-bonsai-branch') && shootRightClasses.includes('js-bonsai-right-diagonal'),
+            shootRightClasses
+        );
+
+        // Test 9: getBranchClasses for DYING
+        const dyingClasses = cssManager.getBranchClasses(CONFIG.branchTypes.DYING, 0, 0);
+        test(
+            'getBranchClasses for DYING returns leaf class',
+            dyingClasses.includes('js-bonsai-leaf'),
+            dyingClasses
+        );
+
+        // Test 10: getBranchClasses for DEAD
+        const deadClasses = cssManager.getBranchClasses(CONFIG.branchTypes.DEAD, 0, 0);
+        test(
+            'getBranchClasses for DEAD returns leaf class',
+            deadClasses.includes('js-bonsai-leaf'),
+            deadClasses
+        );
+
+        // Test 11: getBaseClasses for grass character
+        const grassClasses = cssManager.getBaseClasses('~');
+        test(
+            'getBaseClasses for grass character (~)',
+            grassClasses.includes('js-bonsai-grass'),
+            grassClasses
+        );
+
+        // Test 12: getBaseClasses for dirt character
+        const dirtClasses = cssManager.getBaseClasses('/');
+        test(
+            'getBaseClasses for dirt character (/)',
+            dirtClasses.includes('js-bonsai-dirt'),
+            dirtClasses
+        );
+
+        // Test 13: getBaseClasses for pot character
+        const potClasses = cssManager.getBaseClasses('(');
+        test(
+            'getBaseClasses for pot character (()',
+            potClasses.includes('js-bonsai-base'),
+            potClasses
+        );
+
+        // Test 14: getLeafClasses
+        const leafClasses = cssManager.getLeafClasses();
+        test(
+            'getLeafClasses returns correct classes',
+            leafClasses === 'js-bonsai-element js-bonsai-leaf',
+            leafClasses
+        );
+
+        // Test 15: getMessageClasses
+        const messageClasses = cssManager.getMessageClasses();
+        test(
+            'getMessageClasses returns correct classes',
+            messageClasses === 'js-bonsai-element js-bonsai-message',
+            messageClasses
+        );
+
+        // Test 16: All classes include element class
+        const allTestClasses = [
+            trunkClasses,
+            shootLeftClasses,
+            shootRightClasses,
+            dyingClasses,
+            deadClasses,
+            grassClasses,
+            dirtClasses,
+            potClasses,
+            leafClasses,
+            messageClasses
+        ];
+        const allHaveElement = allTestClasses.every(cls => cls.includes('js-bonsai-element'));
+        test(
+            'All class methods include base element class',
+            allHaveElement,
+            `All ${allTestClasses.length} class types include 'js-bonsai-element'`
+        );
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.className = 'test-section';
+        summary.style.borderLeft = failCount === 0 ? '3px solid #4e9a06' : '3px solid #f44336';
+        summary.innerHTML = `
+            <h2>Summary</h2>
+            <p class="pass">Passed: ${passCount}</p>
+            <p class="fail">Failed: ${failCount}</p>
+            <p><strong class="${failCount === 0 ? 'pass' : 'fail'}">${failCount === 0 ? '✓ ALL TESTS PASSED' : '✗ SOME TESTS FAILED'}</strong></p>
+        `;
+        results.appendChild(summary);
+
+        // Log to console
+        console.log(`CSS Manager Test Results: ${passCount} passed, ${failCount} failed`);
+        console.log('CSSManager:', cssManager);
+    </script>
+</body>
+</html>

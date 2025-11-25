@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Doylestown",
+			"country": {
+				"code": "US",
+				"name": "United States"
+			},
+			"subdivision": {
+				"code": "PA",
+				"name": "Pennsylvania"
+			},
+			"timezone": "America/New_York",
+			"latitude": 40.3061,
+			"longitude": -75.1483,
+			"postalCode": "18901"
+		},
+		"timestamp": 1763948424353
+	}
+}
