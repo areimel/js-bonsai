@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config Test - JS Bonsai</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border-left: 3px solid #4e9a06;
+        }
+        .pass { color: #4e9a06; }
+        .fail { color: #f44336; }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Config Module Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import CONFIG from './src/config/index.js';
+
+        const results = document.getElementById('results');
+        let passCount = 0;
+        let failCount = 0;
+
+        function test(name, condition, details = '') {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+
+            const status = condition ? '✓ PASS' : '✗ FAIL';
+            const statusClass = condition ? 'pass' : 'fail';
+
+            section.innerHTML = `
+                <strong class="${statusClass}">${status}</strong> ${name}
+                ${details ? `<pre>${details}</pre>` : ''}
+            `;
+
+            results.appendChild(section);
+
+            if (condition) {
+                passCount++;
+            } else {
+                failCount++;
+            }
+        }
+
+        // Test 1: CONFIG loads
+        test('CONFIG object exists', typeof CONFIG === 'object' && CONFIG !== null);
+
+        // Test 2: Colors loaded
+        test(
+            'Colors config loaded',
+            CONFIG.colors && CONFIG.colors.trunk === '#976c3c',
+            `trunk: ${CONFIG.colors?.trunk}\nbranch: ${CONFIG.colors?.branch}\nleaf: ${CONFIG.colors?.leaf}`
+        );
+
+        // Test 3: Defaults loaded
+        test(
+            'Defaults config loaded',
+            CONFIG.defaults && CONFIG.defaults.life === 32 && CONFIG.defaults.multiplier === 5,
+            `life: ${CONFIG.defaults?.life}\nmultiplier: ${CONFIG.defaults?.multiplier}\nleaves count: ${CONFIG.defaults?.leaves?.length}`
+        );
+
+        // Test 4: Characters loaded
+        test(
+            'Characters config loaded',
+            CONFIG.characters && Array.isArray(CONFIG.characters.trunks) && CONFIG.characters.trunks.length > 0,
+            `trunks: ${JSON.stringify(CONFIG.characters?.trunks)}\njoints: ${JSON.stringify(CONFIG.characters?.joints)}`
+        );
+
+        // Test 5: Bases loaded
+        test(
+            'Bases config loaded',
+            CONFIG.bases && Array.isArray(CONFIG.bases) && CONFIG.bases.length === 3,
+            `bases count: ${CONFIG.bases?.length}\nbase[1] lines: ${CONFIG.bases?.[1]?.length}`
+        );
+
+        // Test 6: Constants defined
+        test(
+            'Constants defined',
+            CONFIG.classPrefix === 'js-bonsai-',
+            `classPrefix: ${CONFIG.classPrefix}`
+        );
+
+        // Test 7: Branch types enum
+        test(
+            'Branch types enum defined',
+            CONFIG.branchTypes &&
+            CONFIG.branchTypes.TRUNK === 0 &&
+            CONFIG.branchTypes.SHOOT_LEFT === 1 &&
+            CONFIG.branchTypes.SHOOT_RIGHT === 2 &&
+            CONFIG.branchTypes.DYING === 3 &&
+            CONFIG.branchTypes.DEAD === 4,
+            JSON.stringify(CONFIG.branchTypes, null, 2)
+        );
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.className = 'test-section';
+        summary.innerHTML = `
+            <h2>Summary</h2>
+            <p class="pass">Passed: ${passCount}</p>
+            <p class="fail">Failed: ${failCount}</p>
+            <p><strong>${failCount === 0 ? '✓ ALL TESTS PASSED' : '✗ SOME TESTS FAILED'}</strong></p>
+        `;
+        results.appendChild(summary);
+
+        // Log to console for debugging
+        console.log('CONFIG:', CONFIG);
+        console.log(`Test Results: ${passCount} passed, ${failCount} failed`);
+    </script>
+</body>
+</html>

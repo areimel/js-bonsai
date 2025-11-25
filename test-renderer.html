@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renderer Test - JS Bonsai</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .test-section { margin: 20px 0; padding: 15px; background: #2d2d2d; border-left: 3px solid #4e9a06; }
+        .pass { color: #4e9a06; }
+        .fail { color: #f44336; }
+        pre { background: #1e1e1e; padding: 10px; overflow-x: auto; font-size: 12px; }
+        #test-container { background: #000; color: #4e9a06; padding: 20px; font-family: monospace; white-space: pre; min-height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Renderer Test</h1>
+    <div id="results"></div>
+    <h2>Render Output</h2>
+    <div id="test-container"></div>
+
+    <script type="module">
+        import CONFIG from './src/config/index.js';
+        import { CSSManager } from './src/modules/css-manager.js';
+        import { Renderer } from './src/modules/renderer.js';
+
+        const results = document.getElementById('results');
+        let passCount = 0, failCount = 0;
+
+        function test(name, condition, details = '') {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            const status = condition ? '✓ PASS' : '✗ FAIL';
+            const statusClass = condition ? 'pass' : 'fail';
+            section.innerHTML = `<strong class="${statusClass}">${status}</strong> ${name}${details ? `<pre>${details}</pre>` : ''}`;
+            results.appendChild(section);
+            condition ? passCount++ : failCount++;
+        }
+
+        // Create mock state
+        const mockState = {
+            tree: [],
+            timeouts: [],
+            options: { ...CONFIG.defaults, time: 0.01 },
+            refs: { container: document.getElementById('test-container') }
+        };
+
+        // Create CSS manager and inject CSS
+        const cssManager = new CSSManager(CONFIG);
+        cssManager.injectCSS();
+
+        // Create renderer
+        const renderer = new Renderer(mockState, CONFIG, cssManager);
+
+        // Test 1: Renderer created
+        test('Renderer instance created', renderer instanceof Renderer);
+
+        // Test 2: initializeDisplay creates tree array
+        renderer.initializeDisplay();
+        test('initializeDisplay creates tree array', Array.isArray(mockState.tree) && mockState.tree.length > 0, `Rows: ${mockState.tree.length}, Cols: ${mockState.tree[0]?.length}`);
+
+        // Test 3: Tree is 2D array of spaces
+        const isAllSpaces = mockState.tree.every(row => row.every(cell => cell === ' '));
+        test('Tree initialized with spaces', isAllSpaces);
+
+        // Test 4: Add mock data and render
+        mockState.tree[0][0] = { char: '/', cssClass: 'js-bonsai-element js-bonsai-trunk', color: CONFIG.colors.trunk };
+        mockState.tree[1][1] = { char: '|', cssClass: 'js-bonsai-element js-bonsai-trunk', color: CONFIG.colors.trunk };
+        mockState.tree[2][2] = { char: '&', cssClass: 'js-bonsai-element js-bonsai-leaf', color: CONFIG.colors.leaf };
+        renderer.render();
+        const html = mockState.refs.container.innerHTML;
+        test('render() generates HTML output', html.length > 0 && html.includes('<span'), `Output length: ${html.length}`);
+
+        // Test 5: HTML escaping
+        mockState.tree[0][0] = { char: '<', cssClass: 'js-bonsai-element', color: CONFIG.colors.trunk };
+        renderer.render();
+        const escapedHtml = mockState.refs.container.innerHTML;
+        test('render() escapes HTML characters', escapedHtml.includes('&lt;') && !escapedHtml.includes('<<span'));
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.className = 'test-section';
+        summary.style.borderLeft = failCount === 0 ? '3px solid #4e9a06' : '3px solid #f44336';
+        summary.innerHTML = `<h2>Summary</h2><p class="pass">Passed: ${passCount}</p><p class="fail">Failed: ${failCount}</p><p><strong class="${failCount === 0 ? 'pass' : 'fail'}">${failCount === 0 ? '✓ ALL TESTS PASSED' : '✗ SOME TESTS FAILED'}</strong></p>`;
+        results.appendChild(summary);
+
+        console.log(`Renderer Test Results: ${passCount} passed, ${failCount} failed`);
+    </script>
+</body>
+</html>

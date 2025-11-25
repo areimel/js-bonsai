@@ -69,8 +69,10 @@
         <p>Based on <a href="https://gitlab.com/jallbrit/cbonsai" target="_blank" rel="noopener">cbonsai</a> by John Allbritten</p>
     </footer>
 
-    <script src="bonsai.js"></script>
-    <script>
+    <script type="module">
+        // Import the refactored JSBonsai class
+        import { JSBonsai } from './src/bonsai.js';
+
         // Initialize js-bonsai with default options
         document.addEventListener('DOMContentLoaded', () => {
             const bonsai = new JSBonsai({
