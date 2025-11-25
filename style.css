@@ -11,7 +11,7 @@ body {
     background-color: #222;
     color: #eee;
     padding: 20px;
-    max-width: 1200px;
+    max-width: 1400px; /* Increased width to accommodate side-by-side layout */
     margin: 0 auto;
 }
 
@@ -20,10 +20,33 @@ header, footer {
     padding: 20px 0;
 }
 
-main {
+/* Grid layout for main content */
+.grid-layout {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 column grid */
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Options section takes 2 columns */
+.options-section {
+    grid-column: span 2;
+    padding: 20px;
+    font-size: 18px;
+    background-color: #333;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 1px solid #444;
+    max-height: 80vh; /* Limit height to 80% of viewport height */
     display: flex;
     flex-direction: column;
-    gap: 30px;
+}
+
+/* Render section takes 3 columns */
+.render-section {
+    grid-column: span 3;
+    display: flex;
+    justify-content: center;
 }
 
 h1 {
@@ -34,6 +57,8 @@ h1 {
 h2 {
     margin-bottom: 15px;
     color: #4e9a06;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
 }
 
 a {
@@ -43,11 +68,6 @@ a {
 
 a:hover {
     text-decoration: underline;
-}
-
-.container {
-    display: flex;
-    justify-content: center;
 }
 
 /* Bonsai container styling */
@@ -67,24 +87,46 @@ a:hover {
     border: 1px solid #333;
 }
 
-/* Options styling */
-.options {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: #333;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    border: 1px solid #444;
-}
-
+/* Updated option controls to display in logical groups */
 .option-controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    overflow-y: auto; /* Enable scrolling for option controls if needed */
+    margin-bottom: 15px; /* Add space for the control panel */
+    flex: 1; /* Allow this element to grow and take available space */
 }
 
+/* Control panel styling - fixed at the bottom of options section */
+.control-panel {
+    margin-top: auto; /* Push to the bottom of the flex container */
+    padding-top: 15px;
+    border-top: 1px solid #444;
+    background-color: #333; /* Match parent background */
+}
+
+/* Option group styling */
 .option-group {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Option category - for grouping related options */
+.option-category {
     margin-bottom: 15px;
+    padding: 15px;
+    background-color: #2a2a2a;
+    border-radius: 4px;
+    border-left: 3px solid #4a5;
+}
+
+.option-category h3 {
+    margin-bottom: 12px;
+    color: #bbb;
+    font-size: 18px;
+    text-transform: uppercase;
 }
 
 .option-group label {
@@ -94,6 +136,7 @@ a:hover {
     color: #ccc;
 }
 
+/* Form controls styling */
 button, select, input {
     font-family: monospace;
     padding: 8px;
@@ -106,6 +149,11 @@ button, select, input {
 input[type="checkbox"] {
     width: 16px;
     height: 16px;
+    accent-color: #4a5;
+}
+
+input[type="number"] {
+    width: 100%;
 }
 
 button {
@@ -115,8 +163,58 @@ button {
     border: none;
     padding: 10px 15px;
     transition: background-color 0.2s;
+    width: 100%; /* Make button full width in the control panel */
 }
 
 button:hover {
     background-color: #3a4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .grid-layout {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+    
+    .options-section, .render-section {
+        grid-column: 1;
+    }
+    
+    .options-section {
+        max-height: none; /* Remove max-height on mobile */
+    }
+} 
+
+/* Color palette styling */
+.color-palette-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    padding-bottom: 25px; /* Add padding at bottom for labels */
+}
+
+.color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+.color-swatch-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    white-space: nowrap;
+    color: #ccc;
 } 

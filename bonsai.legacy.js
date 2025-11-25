@@ -13,14 +13,14 @@ class JSBonsai {
         screensaver: false,  // Screensaver mode (equivalent to live + infinite)
         message: '',         // Attach message next to the tree
         base: 1,             // ASCII-art plant base to use (0 is none)
-        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ',', 'o', 'O', '0', '#', '%', '$', 'v', 'V', 'x'], // Enhanced leaves list
         multiplier: 5,       // Branch multiplier (0-20)
         life: 32,            // Life (0-200)
         print: true,         // Print tree when finished
         seed: null,          // Random seed
         verbose: false,      // Increase output verbosity
         container: 'js-bonsai', // ID of container element
-        theme: 'default'     // Color theme for the tree
+        theme: 'default',    // Color theme for the tree
+        colorPalette: 'default' // Color palette to use (default, cherry, wisteria, maple)
     };
 
     // Character mappings
@@ -29,6 +29,8 @@ class JSBonsai {
         trunks: ['|', '/', '||', 'Y', 'V', 'v', '^', '<', '>', 'H'],
         // Branch joint characters
         joints: ['/', '//', 'v', '>', '<', '^', 'Y', 'V', 'y', 'T', 't', 'x', 'X', '+'],
+        // Leaf characters
+        leaves: ['&', '+', '*', '.', '^', '@', '~', '`', '"', '/', '_', ',', 'o', 'O', '0', '#', '%', '$', 'v', 'V', 'x'],
         // Branch strings based on direction - matching cbonsai's implementation
         branchStrings: {
             trunk: {
@@ -39,16 +41,16 @@ class JSBonsai {
             },
             shootLeft: {
                 down: "//",
-                horizontal: "//=",
-                leftDiagonal: "//|",
+                horizontal: "</=",
+                leftDiagonal: "//",
                 vertical: "/|",
                 rightDiagonal: "/"
             },
             shootRight: {
                 down: "/",
-                horizontal: "=/",
-                leftDiagonal: "//|",
-                vertical: "/|",
+                horizontal: "=/>",
+                leftDiagonal: "/|",
+                vertical: "||",
                 rightDiagonal: "/"
             }
         },
@@ -59,9 +61,9 @@ class JSBonsai {
             [], // Base 0 - no base
             [   // Base 1 - pot with dirt and grass
                 ":__________./~~~~~\\.__________:",
-                " \\                           /",
-                "  \\________________________ /",
-                "  (_)                     (_)"
+                " \\============================/",
+                "  \\==========================/ ",
+                "  (_)                      (_)  "
             ],
             [   // Base 2 - simple round pot
                 "(_---_./~~~\\._---_)",
@@ -75,11 +77,40 @@ class JSBonsai {
     colors = {
         trunk: "#976c3c",    // Brown for trunk and branches
         branch: "#976c3c",   // Same as trunk
-        leaf: "#4e9a06",     // Green for leaves
+        leaf: "#4e9a06",     // Standard green for leaves
+        leafLight: "#7bba2d", // Lighter green for variety
+        leafDark: "#366804",  // Darker green for variety
         base: "#8a8a8a",     // Gray for base/pot
-        dirt: "#6d3300",     // Brown for soil
         grass: "#4e9a06",     // Green for grass in pot
         message: "#cccccc"   // Light gray for messages
+    };
+
+    // Predefined color palettes
+    colorPalettes = {
+        default: {
+            leaf: "#4e9a06",     // Standard green
+            leafLight: "#7bba2d", // Lighter green
+            leafDark: "#366804",  // Darker green
+            grass: "#4e9a06"      // Green for grass in pot
+        },
+        cherry: {
+            leaf: "#FF80AB",      // Pink
+            leafLight: "#FFBDD4", // Light pink
+            leafDark: "#D85A7F",  // Dark pink
+            grass: "#4e9a06"      // Keep green grass
+        },
+        wisteria: {
+            leaf: "#9575CD",      // Purple
+            leafLight: "#B39DDB", // Light purple
+            leafDark: "#7986CB",  // Light blue-purple
+            grass: "#A5D6A7"      // Light green grass
+        },
+        maple: {
+            leaf: "#E53935",      // Red
+            leafLight: "#FF7043", // Orange-red
+            leafDark: "#B71C1C",  // Dark red
+            grass: "#4e9a06"      // Keep green grass
+        }
     };
 
     // Variables for tree generation
@@ -124,6 +155,9 @@ class JSBonsai {
             console.error(`Container element with ID '${this.options.container}' not found`);
             return;
         }
+        
+        // Apply selected color palette
+        this.applyColorPalette(this.options.colorPalette);
         
         // Set up screensaver mode if enabled
         if (this.options.screensaver) {
@@ -225,23 +259,117 @@ class JSBonsai {
      * Create UI controls for the bonsai tree
      */
     createUI() {
-        const optionsContainer = document.querySelector('.option-controls');
-        if (!optionsContainer) return;
-
-        // Clear existing controls
-        optionsContainer.innerHTML = '';
-
+        // Get container elements for each option category
+        const liveOptionsContainer = document.getElementById('live-options');
+        const growthOptionsContainer = document.getElementById('growth-options');
+        const appearanceOptionsContainer = document.getElementById('appearance-options');
+        const advancedOptionsContainer = document.getElementById('advanced-options');
+        const controlButtonsContainer = document.getElementById('control-buttons');
+        
+        // If containers don't exist, try to use the legacy container
+        if (!liveOptionsContainer || !growthOptionsContainer || !appearanceOptionsContainer || 
+            !advancedOptionsContainer || !controlButtonsContainer) {
+            const optionsContainer = document.querySelector('.option-controls');
+            if (!optionsContainer) return;
+            
+            // Clear existing controls
+            optionsContainer.innerHTML = '';
+            
+            // Create legacy UI (fallback for compatibility)
+            this.createLegacyUI(optionsContainer);
+            return;
+        }
+        
+        // Clear existing controls in each container
+        liveOptionsContainer.innerHTML = '';
+        growthOptionsContainer.innerHTML = '';
+        appearanceOptionsContainer.innerHTML = '';
+        advancedOptionsContainer.innerHTML = '';
+        controlButtonsContainer.innerHTML = '';
+        
+        // Create Display Mode options
+        this.createCheckboxOption(liveOptionsContainer, 'live', 'Live Mode');
+        this.createNumberOption(liveOptionsContainer, 'time', 'Animation Speed (sec)', 0.01, 10, 0.01);
+        this.createCheckboxOption(liveOptionsContainer, 'infinite', 'Infinite Mode');
+        this.createNumberOption(liveOptionsContainer, 'wait', 'Wait Between Trees (sec)', 0.1, 20, 0.1);
+        this.createCheckboxOption(liveOptionsContainer, 'screensaver', 'Screensaver Mode');
+        
+        // Create Growth Parameters options
+        this.createNumberOption(growthOptionsContainer, 'multiplier', 'Branch Multiplier', 0, 20, 1);
+        this.createNumberOption(growthOptionsContainer, 'life', 'Life', 1, 200, 1);
+        
+        // Create Appearance options
+        this.createTextOption(appearanceOptionsContainer, 'message', 'Message');
+        this.createSelectOption(appearanceOptionsContainer, 'base', 'Base Style', [
+            { value: 0, label: 'None' },
+            { value: 1, label: 'Pot with soil' },
+            { value: 2, label: 'Simple pot' }
+        ]);
+        this.createSelectOption(appearanceOptionsContainer, 'colorPalette', 'Color Palette', [
+            { value: 'default', label: 'Default Green' },
+            { value: 'cherry', label: 'Cherry Blossom Pink' },
+            { value: 'wisteria', label: 'Wisteria Purple' },
+            { value: 'maple', label: 'Maple Red' }
+        ]);
+        
+        // Create Advanced options
+        this.createNumberOption(advancedOptionsContainer, 'seed', 'Random Seed', 0, 9999, 1, true);
+        
+        // Create color palette
+        this.createColorPalette();
+        
+        // Create control buttons
+        const generateButton = document.createElement('button');
+        generateButton.textContent = 'Generate New Tree';
+        generateButton.addEventListener('click', () => {
+            this.clearTimeouts();
+            this.reset();
+            this.start();
+        });
+        
+        controlButtonsContainer.appendChild(generateButton);
+    }
+    
+    /**
+     * Legacy UI creation method (for backwards compatibility)
+     * @param {HTMLElement} container - The container element for the UI
+     */
+    createLegacyUI(container) {
         // Create controls for each option
-        this.createCheckboxOption(optionsContainer, 'live', 'Live Mode');
-        this.createNumberOption(optionsContainer, 'time', 'Time (seconds)', 0.01, 10, 0.01);
-        this.createCheckboxOption(optionsContainer, 'infinite', 'Infinite Mode');
-        this.createNumberOption(optionsContainer, 'wait', 'Wait Time (seconds)', 0.1, 20, 0.1);
-        this.createCheckboxOption(optionsContainer, 'screensaver', 'Screensaver Mode');
-        this.createTextOption(optionsContainer, 'message', 'Message');
-        this.createNumberOption(optionsContainer, 'multiplier', 'Branch Multiplier', 0, 20, 1);
-        this.createNumberOption(optionsContainer, 'life', 'Life', 1, 200, 1);
-        this.createNumberOption(optionsContainer, 'seed', 'Random Seed', 0, 9999, 1, true);
-
+        this.createCheckboxOption(container, 'live', 'Live Mode');
+        this.createNumberOption(container, 'time', 'Time (seconds)', 0.01, 10, 0.01);
+        this.createCheckboxOption(container, 'infinite', 'Infinite Mode');
+        this.createNumberOption(container, 'wait', 'Wait Time (seconds)', 0.1, 20, 0.1);
+        this.createCheckboxOption(container, 'screensaver', 'Screensaver Mode');
+        this.createTextOption(container, 'message', 'Message');
+        this.createNumberOption(container, 'multiplier', 'Branch Multiplier', 0, 20, 1);
+        this.createNumberOption(container, 'life', 'Life', 1, 200, 1);
+        this.createNumberOption(container, 'seed', 'Random Seed', 0, 9999, 1, true);
+        
+        // Add color palette selection
+        this.createSelectOption(container, 'colorPalette', 'Color Palette', [
+            { value: 'default', label: 'Default Green' },
+            { value: 'cherry', label: 'Cherry Blossom Pink' },
+            { value: 'wisteria', label: 'Wisteria Purple' },
+            { value: 'maple', label: 'Maple Red' }
+        ]);
+        
+        // Create a color palette in legacy mode
+        const colorGroup = document.createElement('div');
+        colorGroup.className = 'option-group';
+        const colorLabel = document.createElement('label');
+        colorLabel.textContent = 'Color Palette';
+        colorGroup.appendChild(colorLabel);
+        container.appendChild(colorGroup);
+        
+        // Create a palette container inside the option group
+        const paletteContainer = document.createElement('div');
+        paletteContainer.id = 'color-palette';
+        colorGroup.appendChild(paletteContainer);
+        
+        // Generate the color palette
+        this.createColorPalette();
+        
         // Create a "Generate" button
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'option-group';
@@ -255,7 +383,7 @@ class JSBonsai {
         });
         
         buttonGroup.appendChild(generateButton);
-        optionsContainer.appendChild(buttonGroup);
+        container.appendChild(buttonGroup);
     }
 
     /**
@@ -333,6 +461,54 @@ class JSBonsai {
         
         group.appendChild(inputLabel);
         group.appendChild(input);
+        container.appendChild(group);
+    }
+
+    /**
+     * Create a select option in the UI
+     */
+    createSelectOption(container, name, label, options) {
+        const group = document.createElement('div');
+        group.className = 'option-group';
+        
+        const selectLabel = document.createElement('label');
+        selectLabel.htmlFor = `option-${name}`;
+        selectLabel.textContent = label;
+        
+        const select = document.createElement('select');
+        select.id = `option-${name}`;
+        
+        // Add options to select
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            if (this.options[name] === parseInt(opt.value) || this.options[name] === opt.value) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        select.addEventListener('change', (e) => {
+            const newValue = isNaN(parseInt(e.target.value)) ? e.target.value : parseInt(e.target.value);
+            this.options[name] = newValue;
+            
+            // Special handling for color palette changes
+            if (name === 'colorPalette') {
+                this.applyColorPalette(newValue);
+                this.createColorPalette(); // Refresh the color palette display
+                
+                // If not in live mode, regenerate the tree to show the new palette
+                if (!this.options.live) {
+                    this.clearTimeouts();
+                    this.reset();
+                    this.start();
+                }
+            }
+        });
+        
+        group.appendChild(selectLabel);
+        group.appendChild(select);
         container.appendChild(group);
     }
 
@@ -429,28 +605,43 @@ class JSBonsai {
             for (let x = 0; x < cols; x++) {
                 const cell = completedTree[y][x];
                 if (typeof cell === 'object' && cell.char && cell.char !== ' ') {
-                    // Categorize elements based on their color
-                    if (cell.color === this.colors.base || cell.color === this.colors.dirt) {
+                    // First, check by explicit type as the most reliable indicator
+                    if (cell.type === 'base') {
                         baseElements.push({ x, y, cell });
-                    } else if (cell.color === this.colors.branch) {
+                    } else if (cell.type === 'leaf') {
+                        leafElements.push({ x, y, cell });
+                    } else if (cell.type === 'branch') {
+                        branchElements.push({ x, y, cell });
+                    } 
+                    // Second, check by branchType
+                    else if (cell.branchType === this.branchTypes.DYING || cell.branchType === this.branchTypes.DEAD) {
+                        leafElements.push({ x, y, cell });
+                    }
+                    // Third, check by color if type isn't explicit
+                    else if (cell.color === this.colors.base || cell.color === this.colors.grass) {
+                        baseElements.push({ x, y, cell });
+                    } else if (cell.color === this.colors.branch || cell.color === this.colors.trunk) {
+                        branchElements.push({ x, y, cell });
+                    } else if (cell.color === this.colors.leaf || cell.color === this.colors.leafLight || cell.color === this.colors.leafDark) {
+                        leafElements.push({ x, y, cell });
+                    } else if (cell.color === this.colors.message) {
+                        // Messages should be rendered with branches
                         branchElements.push({ x, y, cell });
                     } else {
-                        leafElements.push({ x, y, cell });
+                        // Default to branches for unknown types
+                        console.log("Unknown element type:", cell);
+                        branchElements.push({ x, y, cell }); 
                     }
                 }
             }
         }
         
-        // Sort base elements from bottom to top
+        // Sort elements from bottom to top to maintain proper drawing order
         baseElements.sort((a, b) => b.y - a.y);
-        
-        // Sort branch elements from bottom to top
         branchElements.sort((a, b) => b.y - a.y);
-        
-        // Sort leaf elements from bottom to top
         leafElements.sort((a, b) => b.y - a.y);
         
-        // Combine the phases in order: base -> branches -> leaves
+        // Combine the phases in strict order: base -> branches -> leaves
         const animationSequence = [...baseElements, ...branchElements, ...leafElements];
         
         // Calculate phase transition delays
@@ -547,10 +738,21 @@ class JSBonsai {
                     
                     if (col >= 0 && col < this.tree[0].length) {
                         const char = baseRow[j];
+                        let color;
+                        let type = 'base';
+                        
+                        // Only grass characters should be green, all other base elements should use base color
+                        if (char === '.' || char === '~') {
+                            color = this.colors.grass;
+                            type = 'grass';
+                        } else {
+                            color = this.colors.base;
+                        }
                         
                         this.tree[row][col] = {
                             char: char,
-                            type: 'base',
+                            type: type,
+                            color: color,
                             cssClass: this.getBaseClasses(char)
                         };
                     }
@@ -673,13 +875,20 @@ class JSBonsai {
             
             // Set the character on the display if within bounds
             if (y >= 0 && y < this.tree.length && x >= 0 && x < this.tree[0].length) {
+                // Determine if this is a leaf-type branch (dying or dead)
+                const isLeafType = branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD;
+                
+                // Get a random leaf color if this is a leaf type
+                const leafColor = isLeafType ? this.getRandomLeafColor() : null;
+                
                 this.tree[y][x] = {
                     char: branchStr,
-                    type: branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD ? 'leaf' : 'branch',
+                    type: isLeafType ? 'leaf' : 'branch',
                     branchType: branchType,
+                    color: isLeafType ? leafColor : this.colors.branch,
                     direction: { dx, dy: adjustedDy },
-                    cssClass: branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD ? 
-                        this.getLeafClasses() : 
+                    cssClass: isLeafType ? 
+                        this.getLeafClasses(leafColor) : 
                         this.getBranchClasses(branchType, dx, adjustedDy)
                 };
             }
@@ -735,12 +944,16 @@ class JSBonsai {
                     (typeof this.tree[leafY][leafX] === 'object' && this.tree[leafY][leafX].char === ' ')) {
                     
                     // Select a random leaf character
-                    const leafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                    const leafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
+                    
+                    // Select a random leaf color
+                    const leafColor = this.getRandomLeafColor();
                     
                     this.tree[leafY][leafX] = { 
                         char: leafChar,
                         type: 'leaf',
-                        cssClass: this.getLeafClasses()
+                        color: leafColor,
+                        cssClass: this.getLeafClasses(leafColor)
                     };
                     
                     // Sometimes add additional leaves nearby to create clusters
@@ -760,12 +973,14 @@ class JSBonsai {
                                 (typeof this.tree[secondaryLeafY][secondaryLeafX] === 'object' && 
                                  this.tree[secondaryLeafY][secondaryLeafX].char === ' ')) {
                                 
-                                const secondaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                                const secondaryLeafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
+                                const secondaryLeafColor = this.getRandomLeafColor();
                                 
                                 this.tree[secondaryLeafY][secondaryLeafX] = { 
                                     char: secondaryLeafChar,
                                     type: 'leaf',
-                                    cssClass: this.getLeafClasses()
+                                    color: secondaryLeafColor,
+                                    cssClass: this.getLeafClasses(secondaryLeafColor)
                                 };
                             }
                         }
@@ -786,12 +1001,14 @@ class JSBonsai {
                                 (typeof this.tree[tertiaryLeafY][tertiaryLeafX] === 'object' && 
                                  this.tree[tertiaryLeafY][tertiaryLeafX].char === ' ')) {
                                 
-                                const tertiaryLeafChar = this.options.leaves[Math.floor(Math.random() * this.options.leaves.length)];
+                                const tertiaryLeafChar = this.chars.leaves[Math.floor(Math.random() * this.chars.leaves.length)];
+                                const tertiaryLeafColor = this.getRandomLeafColor();
                                 
                                 this.tree[tertiaryLeafY][tertiaryLeafX] = { 
                                     char: tertiaryLeafChar,
                                     type: 'leaf',
-                                    cssClass: this.getLeafClasses()
+                                    color: tertiaryLeafColor,
+                                    cssClass: this.getLeafClasses(tertiaryLeafColor)
                                 };
                             }
                         }
@@ -820,6 +1037,7 @@ class JSBonsai {
                 this.tree[y][x + i] = { 
                     char: this.options.message[i],
                     type: 'message',
+                    color: this.colors.message,
                     cssClass: this.getMessageClasses()
                 };
             }
@@ -844,7 +1062,9 @@ class JSBonsai {
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#039;');
                     
-                    output += `<span class="${cell.cssClass}">${escapedChar}</span>`;
+                    // Use inline style for color as a backup, but also keep classes for consistent styling
+                    const colorStyle = cell.color ? `color: ${cell.color};` : '';
+                    output += `<span class="${cell.cssClass}" style="${colorStyle}">${escapedChar}</span>`;
                 } else {
                     output += cell;
                 }
@@ -919,8 +1139,8 @@ class JSBonsai {
             case this.branchTypes.DYING:
             case this.branchTypes.DEAD:
                 // Use a random leaf character for dying/dead branches
-                const leafIndex = Math.floor(Math.random() * this.options.leaves.length);
-                branchStr = this.options.leaves[leafIndex];
+                const leafIndex = Math.floor(Math.random() * this.chars.leaves.length);
+                branchStr = this.chars.leaves[leafIndex];
                 break;
         }
         
@@ -1087,11 +1307,18 @@ class JSBonsai {
             .${this.classPrefix}leaf {
                 color: ${this.colors.leaf};
             }
+            .${this.classPrefix}leaf-light {
+                color: ${this.colors.leafLight};
+            }
+            .${this.classPrefix}leaf-dark {
+                color: ${this.colors.leafDark};
+            }
             .${this.classPrefix}base {
                 color: ${this.colors.base};
             }
-            .${this.classPrefix}dirt {
-                color: ${this.colors.dirt};
+            /* All base elements should use the base color */
+            [class*="${this.classPrefix}element"][class*="${this.classPrefix}base"] {
+                color: ${this.colors.base} !important;
             }
             .${this.classPrefix}grass {
                 color: ${this.colors.grass};
@@ -1168,8 +1395,6 @@ class JSBonsai {
         
         if (char === '.' || char === '~') {
             classes.push(`${this.classPrefix}grass`);
-        } else if (char === '/') {
-            classes.push(`${this.classPrefix}dirt`);
         } else {
             classes.push(`${this.classPrefix}base`);
         }
@@ -1179,10 +1404,22 @@ class JSBonsai {
 
     /**
      * Get CSS classes for a leaf element
+     * @param {string} color - The color to use for this leaf 
      * @returns {string} - CSS classes for this leaf element
      */
-    getLeafClasses() {
-        return `${this.classPrefix}element ${this.classPrefix}leaf`;
+    getLeafClasses(color) {
+        let colorClass = `${this.classPrefix}leaf`;
+        
+        // Add specific color class if provided
+        if (color) {
+            if (color === this.colors.leafLight) {
+                colorClass = `${this.classPrefix}leaf-light`;
+            } else if (color === this.colors.leafDark) {
+                colorClass = `${this.classPrefix}leaf-dark`;
+            }
+        }
+        
+        return `${this.classPrefix}element ${colorClass}`;
     }
 
     /**
@@ -1191,6 +1428,128 @@ class JSBonsai {
      */
     getMessageClasses() {
         return `${this.classPrefix}element ${this.classPrefix}message`;
+    }
+
+    /**
+     * Create a color palette display showing the colors used in the bonsai
+     */
+    createColorPalette() {
+        // Get the container for the color palette
+        const colorPaletteContainer = document.getElementById('color-palette');
+        if (!colorPaletteContainer) return;
+        
+        // Clear any existing content
+        colorPaletteContainer.innerHTML = '';
+        
+        // Create a flex container for the color swatches
+        const paletteDisplay = document.createElement('div');
+        paletteDisplay.className = 'color-palette-container';
+        
+        // Get unique colors (some are duplicates like trunk/branch and leaf/grass)
+        const uniqueColors = {};
+        
+        // Process each color in the colors object
+        for (const [key, value] of Object.entries(this.colors)) {
+            // Skip duplicates
+            if (!uniqueColors[value]) {
+                uniqueColors[value] = key;
+            } else if (uniqueColors[value] !== key) {
+                // If multiple elements use the same color, combine their names
+                uniqueColors[value] += `/${key}`;
+            }
+        }
+        
+        // Create a swatch for each unique color
+        for (const [color, label] of Object.entries(uniqueColors)) {
+            // Create the swatch element
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = color;
+            
+            // Add tooltip with the color hex value
+            swatch.title = color;
+            
+            // Add a label for the swatch
+            const swatchLabel = document.createElement('div');
+            swatchLabel.className = 'color-swatch-label';
+            swatchLabel.textContent = label;
+            
+            // Add click behavior to copy the color to clipboard
+            swatch.addEventListener('click', () => {
+                navigator.clipboard.writeText(color)
+                    .then(() => {
+                        // Show brief notification
+                        const originalTitle = swatch.title;
+                        swatch.title = 'Copied!';
+                        setTimeout(() => {
+                            swatch.title = originalTitle;
+                        }, 1000);
+                    });
+            });
+            
+            // Add the label to the swatch
+            swatch.appendChild(swatchLabel);
+            
+            // Add the swatch to the palette
+            paletteDisplay.appendChild(swatch);
+        }
+        
+        // Add the palette display to the container
+        colorPaletteContainer.appendChild(paletteDisplay);
+    }
+
+    /**
+     * Get a random leaf color
+     * @returns {string} - A random color from the three leaf color options
+     */
+    getRandomLeafColor() {
+        // Randomly choose between the three leaf colors
+        const leafColors = [this.colors.leaf, this.colors.leafLight, this.colors.leafDark];
+        const randomIndex = Math.floor(Math.random() * 3);
+        return leafColors[randomIndex];
+    }
+
+    /**
+     * Apply a color palette to the tree
+     * @param {string} paletteName - Name of the palette to apply
+     */
+    applyColorPalette(paletteName) {
+        // Ensure the palette exists
+        if (!this.colorPalettes[paletteName]) {
+            console.warn(`Color palette "${paletteName}" not found, using default.`);
+            paletteName = 'default';
+        }
+        
+        // Get the palette
+        const palette = this.colorPalettes[paletteName];
+        
+        // Update colors
+        Object.keys(palette).forEach(key => {
+            this.colors[key] = palette[key];
+        });
+        
+        // Update the option
+        this.options.colorPalette = paletteName;
+        
+        // Re-inject CSS if already injected
+        if (this.cssInjected) {
+            // Remove existing style
+            const existingStyle = document.getElementById(`${this.classPrefix}style`);
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+            
+            // Reset flag to force re-injection
+            this.cssInjected = false;
+            
+            // Re-inject CSS
+            this.injectCSS();
+        }
+        
+        // If verbose, log the palette change
+        if (this.options.verbose) {
+            console.log(`Applied color palette: ${paletteName}`);
+        }
     }
 }
 
