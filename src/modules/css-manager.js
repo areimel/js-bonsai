@@ -40,6 +40,12 @@ export class CSSManager {
             .${this.classPrefix}leaf {
                 color: ${this.colors.leaf};
             }
+            .${this.classPrefix}leaf-light {
+                color: ${this.colors.leafLight};
+            }
+            .${this.classPrefix}leaf-dark {
+                color: ${this.colors.leafDark};
+            }
             .${this.classPrefix}base {
                 color: ${this.colors.base};
             }
@@ -96,6 +102,12 @@ export class CSSManager {
             }
             .${this.classPrefix}leaf {
                 color: ${this.colors.leaf};
+            }
+            .${this.classPrefix}leaf-light {
+                color: ${this.colors.leafLight};
+            }
+            .${this.classPrefix}leaf-dark {
+                color: ${this.colors.leafDark};
             }
             .${this.classPrefix}base {
                 color: ${this.colors.base};
@@ -187,11 +199,26 @@ export class CSSManager {
 
     /**
      * Get CSS classes for a leaf element
-     * Extracted from bonsai.js lines 1184-1186
+     * @param {string} variant - Leaf color variant: 'base', 'light', or 'dark'
      * @returns {string} - CSS classes for this leaf element
      */
-    getLeafClasses() {
-        return `${this.classPrefix}element ${this.classPrefix}leaf`;
+    getLeafClasses(variant = 'base') {
+        let leafClass;
+
+        switch(variant) {
+            case 'light':
+                leafClass = `${this.classPrefix}leaf-light`;
+                break;
+            case 'dark':
+                leafClass = `${this.classPrefix}leaf-dark`;
+                break;
+            case 'base':
+            default:
+                leafClass = `${this.classPrefix}leaf`;
+                break;
+        }
+
+        return `${this.classPrefix}element ${leafClass}`;
     }
 
     /**

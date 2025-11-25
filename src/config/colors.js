@@ -6,20 +6,28 @@
 // Define all color palettes
 export const colorPalettes = {
     default: {
-        leaf: "#4e9a06",     // Standard green
-        grass: "#4e9a06"     // Green grass
+        leaf: "#4e9a06",         // Standard green
+        leafLight: "#7bba2d",    // Lighter green for variety
+        leafDark: "#366804",     // Darker green for variety
+        grass: "#4e9a06"         // Green grass
     },
     cherry: {
-        leaf: "#FF80AB",     // Pink
-        grass: "#4e9a06"     // Keep green grass
+        leaf: "#FF80AB",         // Pink
+        leafLight: "#FFBDD4",    // Light pink for variety
+        leafDark: "#D85A7F",     // Dark pink for variety
+        grass: "#4e9a06"         // Keep green grass
     },
     wisteria: {
-        leaf: "#9575CD",     // Purple
-        grass: "#A5D6A7"     // Light green grass
+        leaf: "#9575CD",         // Purple
+        leafLight: "#B39DDB",    // Light purple for variety
+        leafDark: "#7986CB",     // Blue-purple for variety
+        grass: "#A5D6A7"         // Light green grass
     },
     maple: {
-        leaf: "#E53935",     // Red
-        grass: "#4e9a06"     // Keep green grass
+        leaf: "#E53935",         // Red
+        leafLight: "#FF7043",    // Orange-red for variety
+        leafDark: "#B71C1C",     // Dark red for variety
+        grass: "#4e9a06"         // Keep green grass
     }
 };
 

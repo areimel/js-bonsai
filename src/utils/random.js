@@ -68,3 +68,20 @@ export function getRandom() {
     }
     return activeGenerator();
 }
+
+/**
+ * Randomly select a leaf color variant
+ * Distribution: 50% base, 25% light, 25% dark
+ * @returns {string} 'base', 'light', or 'dark'
+ */
+export function getLeafVariant() {
+    const rand = getRandom();
+
+    if (rand < 0.5) {
+        return 'base';
+    } else if (rand < 0.75) {
+        return 'light';
+    } else {
+        return 'dark';
+    }
+}

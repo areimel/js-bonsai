@@ -4,7 +4,7 @@
  * CRITICAL: All Math.random() replaced with getRandom()
  */
 
-import { getRandom } from '../utils/random.js';
+import { getRandom, getLeafVariant } from '../utils/random.js';
 
 export class TreeGenerator {
     constructor(state, config, cssManager) {
@@ -229,11 +229,12 @@ export class TreeGenerator {
 
                     // Select a random leaf character
                     const leafChar = this.state.options.leaves[Math.floor(getRandom() * this.state.options.leaves.length)];
+                    const leafVariant = getLeafVariant();
 
                     this.state.tree[leafY][leafX] = {
                         char: leafChar,
                         type: 'leaf',
-                        cssClass: this.cssManager.getLeafClasses()
+                        cssClass: this.cssManager.getLeafClasses(leafVariant)
                     };
 
                     // Sometimes add additional leaves nearby to create clusters
@@ -254,11 +255,12 @@ export class TreeGenerator {
                                  this.state.tree[secondaryLeafY][secondaryLeafX].char === ' ')) {
 
                                 const secondaryLeafChar = this.state.options.leaves[Math.floor(getRandom() * this.state.options.leaves.length)];
+                                const secondaryLeafVariant = getLeafVariant();
 
                                 this.state.tree[secondaryLeafY][secondaryLeafX] = {
                                     char: secondaryLeafChar,
                                     type: 'leaf',
-                                    cssClass: this.cssManager.getLeafClasses()
+                                    cssClass: this.cssManager.getLeafClasses(secondaryLeafVariant)
                                 };
                             }
                         }
@@ -280,11 +282,12 @@ export class TreeGenerator {
                                  this.state.tree[tertiaryLeafY][tertiaryLeafX].char === ' ')) {
 
                                 const tertiaryLeafChar = this.state.options.leaves[Math.floor(getRandom() * this.state.options.leaves.length)];
+                                const tertiaryLeafVariant = getLeafVariant();
 
                                 this.state.tree[tertiaryLeafY][tertiaryLeafX] = {
                                     char: tertiaryLeafChar,
                                     type: 'leaf',
-                                    cssClass: this.cssManager.getLeafClasses()
+                                    cssClass: this.cssManager.getLeafClasses(tertiaryLeafVariant)
                                 };
                             }
                         }
