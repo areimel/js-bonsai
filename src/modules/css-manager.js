@@ -67,6 +67,59 @@ export class CSSManager {
     }
 
     /**
+     * Update CSS colors dynamically for a new palette
+     * @param {string} paletteName - Name of the palette to apply
+     */
+    updateColors(paletteName) {
+        // Get new colors for the palette
+        const newColors = this.config.getColorsForPalette(paletteName);
+        this.colors = newColors;
+
+        // Find the existing style element
+        const styleElement = document.getElementById(`${this.classPrefix}style`);
+        if (!styleElement) {
+            console.error('CSS not injected yet - cannot update colors');
+            return;
+        }
+
+        // Rebuild CSS with new colors (same structure as injectCSS)
+        const css = `
+            .${this.classPrefix}element {
+                display: inline-block;
+                white-space: pre;
+            }
+            .${this.classPrefix}trunk {
+                color: ${this.colors.trunk};
+            }
+            .${this.classPrefix}branch {
+                color: ${this.colors.branch};
+            }
+            .${this.classPrefix}leaf {
+                color: ${this.colors.leaf};
+            }
+            .${this.classPrefix}base {
+                color: ${this.colors.base};
+            }
+            .${this.classPrefix}dirt {
+                color: ${this.colors.dirt};
+            }
+            .${this.classPrefix}grass {
+                color: ${this.colors.grass};
+            }
+            .${this.classPrefix}message {
+                color: ${this.colors.message};
+            }
+        `;
+
+        // Update the style element
+        if (styleElement.styleSheet) {
+            styleElement.styleSheet.cssText = css;
+        } else {
+            styleElement.textContent = css;
+        }
+    }
+
+    /**
      * Get CSS classes for a branch element
      * Extracted from bonsai.js lines 1123-1159
      * @param {number} branchType - Type of branch

@@ -31,6 +31,20 @@ export class UIControls {
         this.createNumberOption(optionsContainer, 'life', 'Life', 1, 200, 1);
         this.createNumberOption(optionsContainer, 'seed', 'Random Seed', 0, 9999, 1, true);
 
+        // Add color palette selector
+        this.createSelectOption(
+            optionsContainer,
+            'colorPalette',
+            'Color Palette',
+            [
+                { value: 'default', label: 'Default Green' },
+                { value: 'cherry', label: 'Cherry Blossom Pink' },
+                { value: 'wisteria', label: 'Wisteria Purple' },
+                { value: 'maple', label: 'Maple Red' }
+            ],
+            this.callbacks.onPaletteChange
+        );
+
         // Create a "Generate" button
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'option-group';
@@ -125,6 +139,49 @@ export class UIControls {
 
         group.appendChild(inputLabel);
         group.appendChild(input);
+        container.appendChild(group);
+    }
+
+    /**
+     * Create a select dropdown option in the UI
+     * @param {HTMLElement} container - Container element
+     * @param {string} name - Option name
+     * @param {string} label - Display label
+     * @param {Array} options - Array of {value, label} objects
+     * @param {Function} onChange - Optional callback when selection changes
+     */
+    createSelectOption(container, name, label, options, onChange = null) {
+        const group = document.createElement('div');
+        group.className = 'option-group';
+
+        const selectLabel = document.createElement('label');
+        selectLabel.htmlFor = `option-${name}`;
+        selectLabel.textContent = label;
+
+        const select = document.createElement('select');
+        select.id = `option-${name}`;
+
+        // Create option elements
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            option.selected = this.options[name] === opt.value;
+            select.appendChild(option);
+        });
+
+        // Add change event listener
+        select.addEventListener('change', (e) => {
+            this.options[name] = e.target.value;
+
+            // Call custom onChange callback if provided
+            if (onChange && typeof onChange === 'function') {
+                onChange(e.target.value);
+            }
+        });
+
+        group.appendChild(selectLabel);
+        group.appendChild(select);
         container.appendChild(group);
     }
 }

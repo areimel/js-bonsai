@@ -18,5 +18,5 @@ export default {
     seed: null,          // Random seed
     verbose: false,      // Increase output verbosity
     container: 'js-bonsai', // ID of container element
-    theme: 'default'     // Color theme for the tree
+    colorPalette: 'default'  // Color palette for the tree
 };

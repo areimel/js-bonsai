@@ -61,10 +61,17 @@ export class JSBonsai {
 
         // Create modules (order matters for dependencies)
         this.cssManager = new CSSManager(CONFIG);
+
+        // Set initial colors based on colorPalette option
+        if (this.state.options.colorPalette && this.state.options.colorPalette !== 'default') {
+            this.cssManager.colors = CONFIG.getColorsForPalette(this.state.options.colorPalette);
+        }
+
         this.uiControls = new UIControls(this.state.options, {
             onReset: () => this.reset(),
             onClearTimeouts: () => this.clearTimeouts(),
-            onStart: () => this.start()
+            onStart: () => this.start(),
+            onPaletteChange: (paletteName) => this.changePalette(paletteName)
         });
         this.renderer = new Renderer(this.state, CONFIG, this.cssManager);
         this.treeGenerator = new TreeGenerator(this.state, CONFIG, this.cssManager);
@@ -231,5 +238,22 @@ export class JSBonsai {
         };
 
         growLoop();
+    }
+
+    /**
+     * Change the color palette and update the display
+     * @param {string} paletteName - Name of the palette to apply
+     */
+    changePalette(paletteName) {
+        // Update CSS with new palette colors
+        this.cssManager.updateColors(paletteName);
+
+        // Update the option for state consistency
+        this.state.options.colorPalette = paletteName;
+
+        // Log if verbose
+        if (this.state.options.verbose) {
+            console.log(`Color palette changed to: ${paletteName}`);
+        }
     }
 }
