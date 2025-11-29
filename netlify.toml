@@ -1,0 +1,11 @@
+[build]
+  command = "cd react-app && pnpm install && pnpm run build"
+  publish = "react-app/dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

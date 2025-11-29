@@ -27,30 +27,6 @@
 
 ---
 
-## Pre-Migration Checklist
-
-### Current State Verification
-- [ ] Confirm current branch is `refactor-react-site`
-- [ ] Verify vanilla version works correctly
-  - [ ] Test tree generation with default settings
-  - [ ] Test all 4 color palettes (default, cherry, wisteria, maple)
-  - [ ] Test live mode animation
-  - [ ] Test infinite mode
-  - [ ] Test with fixed seed (record seed number: _____)
-- [ ] Take screenshots of current UI for comparison
-  - [ ] Default palette
-  - [ ] Cherry palette
-  - [ ] Wisteria palette
-  - [ ] Maple palette
-- [ ] Document current file structure
-- [ ] Commit any uncommitted changes
-
-### Backup Strategy
-- [ ] Create git tag `pre-react-migration` for easy rollback
-- [ ] Verify `.gitignore` exists and is current
-
----
-
 ## Phase 1: Project Setup (Vite + React + Tailwind)
 
 **Goal:** Initialize modern build tooling and dependencies
