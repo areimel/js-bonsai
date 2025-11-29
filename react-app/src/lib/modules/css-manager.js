@@ -58,6 +58,13 @@ export class CSSManager {
             .${this.classPrefix}message {
                 color: ${this.colors.message};
             }
+            .${this.classPrefix}hidden {
+                opacity: 0;
+            }
+            .${this.classPrefix}visible {
+                opacity: 1;
+                transition: opacity 0.1s ease-in;
+            }
         `;
 
         // Add CSS to the style element
@@ -120,6 +127,13 @@ export class CSSManager {
             }
             .${this.classPrefix}message {
                 color: ${this.colors.message};
+            }
+            .${this.classPrefix}hidden {
+                opacity: 0;
+            }
+            .${this.classPrefix}visible {
+                opacity: 1;
+                transition: opacity 0.1s ease-in;
             }
         `;
 

@@ -30,15 +30,30 @@ export class Renderer {
     }
 
     /**
+     * Generate a unique identifier for a cell position
+     * Used for CSS-based animation targeting
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     * @returns {string} - Unique identifier
+     */
+    getCellId(x, y) {
+        return `cell-${y}-${x}`;
+    }
+
+    /**
      * Render the tree to the DOM
      * Extracted from bonsai.js lines 832-857
+     * MODIFIED: Now includes data-cell-id and supports hidden state
+     * @param {boolean} hideAll - If true, add 'hidden' class to all cells (for animation)
      */
-    render() {
+    render(hideAll = false) {
         let output = '';
 
         // Convert the 2D array to a string with classed spans
-        for (let row of this.state.tree) {
-            for (let cell of row) {
+        for (let y = 0; y < this.state.tree.length; y++) {
+            const row = this.state.tree[y];
+            for (let x = 0; x < row.length; x++) {
+                const cell = row[x];
                 if (typeof cell === 'object' && cell.char) {
                     // Make sure to HTML-escape any special characters
                     const escapedChar = cell.char
@@ -48,7 +63,12 @@ export class Renderer {
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#039;');
 
-                    output += `<span class="${cell.cssClass}">${escapedChar}</span>`;
+                    // Build classes: base classes + hidden state
+                    const cellId = this.getCellId(x, y);
+                    const hiddenClass = hideAll ? ` ${this.config.classPrefix}hidden` : '';
+                    const classes = `${cell.cssClass}${hiddenClass}`;
+
+                    output += `<span class="${classes}" data-cell-id="${cellId}">${escapedChar}</span>`;
                 } else {
                     output += cell;
                 }
@@ -61,33 +81,57 @@ export class Renderer {
     }
 
     /**
+     * Reveal a single cell by removing hidden class and adding visible class
+     * Used for CSS-based animation
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     */
+    revealCell(x, y) {
+        const cellId = this.getCellId(x, y);
+        const element = this.state.refs.container.querySelector(`[data-cell-id="${cellId}"]`);
+
+        if (element) {
+            element.classList.remove(`${this.config.classPrefix}hidden`);
+            element.classList.add(`${this.config.classPrefix}visible`);
+        }
+    }
+
+    /**
      * Animate tree rendering in three phases: base -> branches -> leaves
+     * MODIFIED: Uses CSS-based reveal instead of innerHTML manipulation
      * Extracted from bonsai.js lines 414-489
+     *
+     * PERFORMANCE: This implementation uses CSS-based animation to avoid DOM thrashing.
+     * Instead of rebuilding innerHTML on every frame, we render once with all characters
+     * hidden, then reveal them by toggling CSS classes. This keeps the DOM structure
+     * stable during animation and leverages GPU-accelerated CSS transitions.
      */
     animateTreeRendering() {
-        // Create a copy of the completed tree for animation
-        const completedTree = JSON.parse(JSON.stringify(this.state.tree));
-
-        // Reset the visible tree to empty
-        const rows = this.state.tree.length;
-        const cols = this.state.tree[0].length;
-        this.state.tree = Array(rows).fill().map(() => Array(cols).fill(' '));
+        // Render the complete tree with all cells hidden
+        this.render(true);
 
         // Group cells into three categories: base, branches, and leaves
         const baseElements = [];
         const branchElements = [];
         const leafElements = [];
 
+        const rows = this.state.tree.length;
+        const cols = this.state.tree[0].length;
+
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
-                const cell = completedTree[y][x];
+                const cell = this.state.tree[y][x];
                 if (typeof cell === 'object' && cell.char && cell.char !== ' ') {
-                    // Categorize elements based on their color
-                    if (cell.color === this.config.colors.base || cell.color === this.config.colors.dirt) {
+                    // BUG FIX: Previous implementation used cell.color for categorization, but
+                    // cell.color is never set by tree-generator.js. Changed to use cell.type.
+                    if (cell.type === 'base') {
                         baseElements.push({ x, y, cell });
-                    } else if (cell.color === this.config.colors.branch) {
+                    } else if (cell.type === 'branch') {
                         branchElements.push({ x, y, cell });
-                    } else {
+                    } else if (cell.type === 'leaf') {
+                        leafElements.push({ x, y, cell });
+                    } else if (cell.type === 'message') {
+                        // Messages are revealed with leaves
                         leafElements.push({ x, y, cell });
                     }
                 }
@@ -133,8 +177,7 @@ export class Renderer {
             }
 
             const timeout = setTimeout(() => {
-                this.state.tree[item.y][item.x] = item.cell;
-                this.render();
+                this.revealCell(item.x, item.y);
             }, delay);
 
             this.state.timeouts.push(timeout);
