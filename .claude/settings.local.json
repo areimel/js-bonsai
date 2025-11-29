@@ -4,7 +4,8 @@
       "Bash(nul)",
       "Bash(dir:*)",
       "Bash(cat:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pnpm build:*)"
     ],
     "deny": [],
     "ask": []
