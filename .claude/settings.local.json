@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(nul)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "WebSearch",
+      "Bash(pnpm build:*)"
     ],
     "deny": [],
     "ask": []
