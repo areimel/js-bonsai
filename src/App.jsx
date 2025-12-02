@@ -3,6 +3,7 @@ import Bonsai from '@components/Bonsai';
 import BonsaiControls from '@components/BonsaiControls';
 import Header from '@components/Header';
 import Footer from '@components/Footer';
+import TerminalFrame from '@components/TerminalFrame';
 import { useTheme } from '@hooks/useTheme';
 import './App.css';
 
@@ -66,11 +67,13 @@ function App() {
 
       {/* Main content area */}
       <main className="pt-14 pb-12 md:pr-72 min-h-screen flex items-center justify-center p-4">
-        <Bonsai
-          key={`${regenerateKey}-${JSON.stringify(bonsaiOptions)}`}
-          ref={bonsaiRef}
-          options={bonsaiOptions}
-        />
+        <TerminalFrame>
+          <Bonsai
+            key={`${regenerateKey}-${JSON.stringify(bonsaiOptions)}`}
+            ref={bonsaiRef}
+            options={bonsaiOptions}
+          />
+        </TerminalFrame>
       </main>
 
       {/* Sidebar Controls */}
