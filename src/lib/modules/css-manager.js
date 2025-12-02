@@ -28,26 +28,31 @@ export class CSSManager {
         // Build CSS rules
         let css = `
             .${this.classPrefix}element {
-                display: inline-block;
-                white-space: pre;
-            }
-            .${this.classPrefix}trunk {
-                color: ${this.colors.trunk};
-            }
-            .${this.classPrefix}branch {
-                color: ${this.colors.branch};
-            }
-            .${this.classPrefix}leaf {
-                color: ${this.colors.leaf};
-            }
-            .${this.classPrefix}leaf-light {
-                color: ${this.colors.leafLight};
-            }
-            .${this.classPrefix}leaf-dark {
-                color: ${this.colors.leafDark};
+                /* Grid positioning applied via inline styles */
             }
             .${this.classPrefix}base {
                 color: ${this.colors.base};
+                z-index: 1;
+            }
+            .${this.classPrefix}trunk {
+                color: ${this.colors.trunk};
+                z-index: 2;
+            }
+            .${this.classPrefix}branch {
+                color: ${this.colors.branch};
+                z-index: 2;
+            }
+            .${this.classPrefix}leaf {
+                color: ${this.colors.leaf};
+                z-index: 3;
+            }
+            .${this.classPrefix}leaf-light {
+                color: ${this.colors.leafLight};
+                z-index: 3;
+            }
+            .${this.classPrefix}leaf-dark {
+                color: ${this.colors.leafDark};
+                z-index: 3;
             }
             .${this.classPrefix}dirt {
                 color: ${this.colors.dirt};
@@ -77,6 +82,45 @@ export class CSSManager {
         // Add the style element to the document head
         document.head.appendChild(style);
         this.cssInjected = true;
+    }
+
+    /**
+     * Inject CSS Grid layout styles for the container
+     * Called after grid dimensions are calculated
+     * @param {string} containerId - ID of the container element
+     * @param {number} rows - Number of grid rows
+     * @param {number} cols - Number of grid columns
+     */
+    injectGridStyles(containerId, rows, cols) {
+        // Remove old grid styles if they exist
+        const oldStyle = document.getElementById(`${this.classPrefix}grid-style`);
+        if (oldStyle) {
+            oldStyle.remove();
+        }
+
+        // Create new style element for grid
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.id = `${this.classPrefix}grid-style`;
+
+        // Build grid CSS
+        const css = `
+            #${containerId} {
+                display: grid;
+                grid-template-columns: repeat(${cols}, 1ch);
+                grid-template-rows: repeat(${rows}, 1lh);
+                position: relative;
+            }
+        `;
+
+        // Add CSS
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.textContent = css;
+        }
+
+        document.head.appendChild(style);
     }
 
     /**
