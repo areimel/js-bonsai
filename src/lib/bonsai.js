@@ -200,9 +200,12 @@ export class JSBonsai {
             this.treeGenerator.drawBase(startX, startY);
         }
 
-        // Seed the trunk's initial position
-        // Place the trunk character just above the base
-        const trunkY = startY - (this.state.options.base > 0 ? CONFIG.bases[this.state.options.base].length : 0);
+        // Calculate trunk Y position with buffer to prevent visual overlap
+        // The trunk starts above the base pot with configurable spacing
+        // Buffer ensures tree branches don't intersect with pot ASCII art
+        const baseHeight = this.state.options.base > 0 ? CONFIG.bases[this.state.options.base].length : 0;
+        const buffer = this.state.options.base > 0 ? this.state.options.baseBuffer : 0;
+        const trunkY = startY - baseHeight - buffer;
 
         // Build the tree structure first
         this.treeGenerator.growBranch(startX, trunkY, 0, -1, CONFIG.branchTypes.TRUNK, this.state.options.life);
