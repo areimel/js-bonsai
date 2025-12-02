@@ -202,8 +202,6 @@ export class CSSManager {
 
         if (char === '.' || char === '~') {
             classes.push(`${this.classPrefix}grass`);
-        } else if (char === '/') {
-            classes.push(`${this.classPrefix}dirt`);
         } else {
             classes.push(`${this.classPrefix}base`);
         }

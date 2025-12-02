@@ -129,8 +129,8 @@ export default function BonsaiControls({
                 className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               >
                 <option value="0">None</option>
-                <option value="1">Small Pot</option>
-                <option value="2">Large Pot</option>
+                <option value="1">Large Pot</option>
+                <option value="2">Small Pot</option>
               </select>
             </div>
 
