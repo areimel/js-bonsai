@@ -11,6 +11,12 @@ export default function BonsaiControls({
 
   const handleChange = (key, value) => {
     const newOptions = { ...localOptions, [key]: value };
+
+    // Auto-enable live mode when autoplay is enabled
+    if (key === 'autoplay' && value === true) {
+      newOptions.live = true;
+    }
+
     setLocalOptions(newOptions);
     onOptionsChange(newOptions);
   };
@@ -162,7 +168,8 @@ export default function BonsaiControls({
                 type="checkbox"
                 checked={localOptions.live}
                 onChange={(e) => handleChange('live', e.target.checked)}
-                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
+                disabled={localOptions.autoplay}
+                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent) disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <span className="text-sm text-(--text-secondary)">Animate</span>
             </label>
@@ -185,19 +192,19 @@ export default function BonsaiControls({
               </div>
             )}
 
-            {/* Infinite Mode - Checkbox */}
+            {/* Autoplay Mode - Checkbox */}
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={localOptions.infinite}
-                onChange={(e) => handleChange('infinite', e.target.checked)}
+                checked={localOptions.autoplay}
+                onChange={(e) => handleChange('autoplay', e.target.checked)}
                 className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
               />
-              <span className="text-sm text-(--text-secondary)">Infinite</span>
+              <span className="text-sm text-(--text-secondary)">Autoplay</span>
             </label>
 
             {/* Wait Time - Number Input (conditional) */}
-            {localOptions.infinite && (
+            {localOptions.autoplay && (
               <div className="flex items-center justify-between">
                 <label className="text-sm text-(--text-secondary)">Wait (s)</label>
                 <input
@@ -213,17 +220,6 @@ export default function BonsaiControls({
                 />
               </div>
             )}
-
-            {/* Screensaver - Checkbox */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={localOptions.screensaver}
-                onChange={(e) => handleChange('screensaver', e.target.checked)}
-                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
-              />
-              <span className="text-sm text-(--text-secondary)">Screensaver</span>
-            </label>
           </div>
 
           {/* Options Section */}

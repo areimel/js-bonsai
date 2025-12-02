@@ -6,7 +6,7 @@ This document provides context for the Gemini code assistant to understand the j
 
 js-bonsai is a web application that generates procedural ASCII art bonsai trees. It is a port of the command-line tool `cbonsai` to JavaScript and React.
 
-The application allows users to customize the generated trees by adjusting parameters such as size, density, and color. It also supports animations and an "infinite" mode for continuous generation.
+The application allows users to customize the generated trees by adjusting parameters such as size, density, and color. It also supports live animations and an "autoplay" mode for continuous generation with automatic animation.
 
 ### Key Technologies
 

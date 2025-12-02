@@ -15,7 +15,7 @@ function App() {
   const [bonsaiOptions, setBonsaiOptions] = useState({
     live: true,
     time: 0.03,
-    infinite: false,
+    autoplay: false,
     wait: 4.0,
     message: '',
     base: 1,

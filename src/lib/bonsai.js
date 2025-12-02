@@ -29,15 +29,19 @@ export class JSBonsai {
                 shootCounter: 0
             },
             flags: {                 // Status flags
-                isGrowing: false,
-                isScreensaverActive: false
+                isGrowing: false
             },
             refs: {                  // DOM references
-                container: null,
-                keydownListener: null
+                container: null
             },
             options: { ...CONFIG.defaults, ...options }  // Merged options
         };
+
+        // Migrate legacy options
+        if (options.infinite || options.screensaver) {
+            this.state.options.autoplay = true;
+            console.warn('The "infinite" and "screensaver" options are deprecated. Use "autoplay" instead.');
+        }
 
         // Get container element (support both string ID and direct element reference for React)
         if (typeof this.state.options.container === 'string') {
@@ -54,11 +58,9 @@ export class JSBonsai {
             return;
         }
 
-        // Set up screensaver mode if enabled
-        if (this.state.options.screensaver) {
+        // Set up autoplay mode if enabled
+        if (this.state.options.autoplay) {
             this.state.options.live = true;
-            this.state.options.infinite = true;
-            this.setupScreensaver();
         }
 
         // Validate options
@@ -128,29 +130,13 @@ export class JSBonsai {
      * Extracted from bonsai.js lines 200-206
      */
     start() {
-        if (this.state.options.infinite) {
+        if (this.state.options.autoplay) {
             this.growInfinitely();
         } else {
             this.growTree();
         }
     }
 
-    /**
-     * Setup screensaver mode (exit on keypress)
-     * Extracted from bonsai.js lines 211-222
-     */
-    setupScreensaver() {
-        this.state.flags.isScreensaverActive = true;
-
-        // Add keydown event listener to exit screensaver
-        this.state.refs.keydownListener = () => {
-            this.state.flags.isScreensaverActive = false;
-            this.clearTimeouts();
-            document.removeEventListener('keydown', this.state.refs.keydownListener);
-        };
-
-        document.addEventListener('keydown', this.state.refs.keydownListener);
-    }
 
     /**
      * Reset the tree state
@@ -237,7 +223,7 @@ export class JSBonsai {
      */
     growInfinitely() {
         const growLoop = () => {
-            if (!this.state.flags.isScreensaverActive && !this.state.options.infinite) return;
+            if (!this.state.options.autoplay) return;
 
             this.growTree();
 

@@ -18,7 +18,7 @@
 
 ## About
 
-JS Bonsai is a web application that generates beautiful, procedurally-generated ASCII art bonsai trees with smooth CSS-based animations. Watch your bonsai grow from a small seedling into a unique tree, or let it continuously generate new trees in infinite mode for a mesmerizing screensaver effect.
+JS Bonsai is a web application that generates beautiful, procedurally-generated ASCII art bonsai trees with smooth CSS-based animations. Watch your bonsai grow from a small seedling into a unique tree, or enable autoplay mode to continuously regenerate new trees with smooth animations.
 
 This project is a JavaScript port of [cbonsai](https://gitlab.com/jallbrit/cbonsai) by Jules Allbritton, reimagined as a modern React web application.
 
@@ -29,7 +29,7 @@ This project is a JavaScript port of [cbonsai](https://gitlab.com/jallbrit/cbons
 - 🎲 **Seeded random generation** - Save and share your favorite trees
 - 🌸 **Multiple color palettes** - Default green, cherry pink, wisteria purple, maple red
 - ⚙️ **Highly customizable** - Control size, density, animation speed, and more
-- 🔄 **Infinite mode** - Continuous tree generation for endless zen
+- 🔄 **Autoplay mode** - Continuous tree generation for endless zen
 - 💬 **Custom messages** - Add personalized text to your tree
 
 ## Features
@@ -51,8 +51,7 @@ This project is a JavaScript port of [cbonsai](https://gitlab.com/jallbrit/cbons
 
 - **Live Animation** - Watch the tree grow step-by-step in real-time
 - **Instant Generation** - Generate trees immediately without animation
-- **Infinite Mode** - Continuously generate new trees
-- **Screensaver Mode** - Combines live animation + infinite mode
+- **Autoplay Mode** - Continuous tree regeneration with live animation
 
 ### Reproducibility
 
@@ -78,7 +77,7 @@ Visit the live demo and customize your bonsai tree using the controls panel:
 - Higher **Life** values (80-150) create larger, more majestic trees
 - Lower **Multiplier** values (2-4) create sparse, elegant trees
 - Higher **Multiplier** values (10-18) create dense, full foliage
-- Try **Infinite Mode** for a relaxing screensaver experience
+- Try **Autoplay Mode** for a relaxing continuous experience
 - Save interesting seed values to build a collection of favorite trees
 
 ## Installation
@@ -127,8 +126,8 @@ When using the JSBonsai library directly, you can configure trees with these opt
   colorPalette: 'default', // 'default' | 'cherry' | 'wisteria' | 'maple'
   time: 0.03,            // Animation speed in seconds per step (0.001-0.1)
   live: true,            // Enable/disable live animation
-  infinite: false,       // Continuous generation mode
-  wait: 4.0,             // Seconds between trees in infinite mode (1-10)
+  autoplay: false,       // Autoplay mode: continuous generation with live animation
+  wait: 4.0,             // Seconds between trees in autoplay mode (1-10)
   message: '',           // Custom text message to display
   seed: null             // Integer seed for reproducible trees (null for random)
 }

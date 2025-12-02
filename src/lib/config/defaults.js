@@ -6,9 +6,8 @@
 export default {
     live: false,         // Live mode: show each step of growth
     time: 0.03,          // In live mode, wait time (seconds) between steps
-    infinite: false,     // Infinite mode: keep growing trees
-    wait: 4.0,           // In infinite mode, wait time between each tree
-    screensaver: false,  // Screensaver mode (equivalent to live + infinite)
+    autoplay: false,     // Autoplay mode: continuous tree regeneration (auto-enables live mode)
+    wait: 4.0,           // In autoplay mode, wait time between each tree
     message: '',         // Attach message next to the tree
     base: 1,             // ASCII-art plant base to use (0 is none)
     baseBuffer: 0,       // Empty rows between tree and base pot (prevents overlap)
