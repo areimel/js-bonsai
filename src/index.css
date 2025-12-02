@@ -1,9 +1,60 @@
 @import "tailwindcss";
 
-/* Minimal custom base styles for optimal rendering */
+/* Theme System - CSS Custom Properties */
 :root {
+  /* Off-White Theme (Default) */
+  --bg-primary: #faf9f7;
+  --bg-secondary: #f0eeeb;
+  --bg-tertiary: #e5e2de;
+  --border: #d4d0ca;
+  --text-primary: #2c2a27;
+  --text-secondary: #5c5854;
+  --text-muted: #8a8680;
+  --accent: #6b8e5e;
+  --accent-hover: #5a7a4f;
+
+  /* Base rendering settings */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Beige Theme */
+[data-theme="beige"] {
+  --bg-primary: #e8e0d5;
+  --bg-secondary: #d9cfc2;
+  --bg-tertiary: #ccc0b0;
+  --border: #b8a996;
+  --text-primary: #3d352c;
+  --text-secondary: #5e5347;
+  --text-muted: #8a7d6f;
+  --accent: #7a8b5d;
+  --accent-hover: #68764e;
+}
+
+/* Brown Theme (Inverse Beige) */
+[data-theme="brown"] {
+  --bg-primary: #3d352c;
+  --bg-secondary: #4a4034;
+  --bg-tertiary: #5e5347;
+  --border: #6e6256;
+  --text-primary: #e8e0d5;
+  --text-secondary: #ccc0b0;
+  --text-muted: #a89b8a;
+  --accent: #9aab7d;
+  --accent-hover: #aabb8d;
+}
+
+/* Off-Black Theme */
+[data-theme="off-black"] {
+  --bg-primary: #1a1918;
+  --bg-secondary: #252322;
+  --bg-tertiary: #333130;
+  --border: #454240;
+  --text-primary: #e8e6e3;
+  --text-secondary: #b5b2ae;
+  --text-muted: #7d7a76;
+  --accent: #8aab6e;
+  --accent-hover: #9bbc7f;
 }

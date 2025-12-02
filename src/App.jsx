@@ -3,12 +3,15 @@ import Bonsai from '@components/Bonsai';
 import BonsaiControls from '@components/BonsaiControls';
 import Header from '@components/Header';
 import Footer from '@components/Footer';
+import TerminalFrame from '@components/TerminalFrame';
+import { useTheme } from '@hooks/useTheme';
 import './App.css';
 
 function App() {
   const bonsaiRef = useRef(null);
   const [regenerateKey, setRegenerateKey] = useState(0);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [bonsaiOptions, setBonsaiOptions] = useState({
     live: true,
     time: 0.03,
@@ -31,14 +34,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-(--bg-primary) text-(--text-primary)">
       {/* Header */}
-      <Header />
+      <Header theme={theme} onThemeChange={setTheme} />
 
       {/* Mobile toggle button */}
       <button
         onClick={toggleControls}
-        className="fixed top-16 right-4 z-50 md:hidden p-2 bg-gray-800 rounded-lg border border-gray-700 hover:bg-gray-700 transition-colors"
+        className="fixed top-16 right-4 z-50 md:hidden p-2 bg-(--bg-secondary) rounded-lg border border-(--border) hover:bg-(--bg-tertiary) transition-colors"
         aria-label="Toggle controls"
       >
         <svg
@@ -64,11 +67,13 @@ function App() {
 
       {/* Main content area */}
       <main className="pt-14 pb-12 md:pr-72 min-h-screen flex items-center justify-center p-4">
-        <Bonsai
-          key={`${regenerateKey}-${JSON.stringify(bonsaiOptions)}`}
-          ref={bonsaiRef}
-          options={bonsaiOptions}
-        />
+        <TerminalFrame>
+          <Bonsai
+            key={`${regenerateKey}-${JSON.stringify(bonsaiOptions)}`}
+            ref={bonsaiRef}
+            options={bonsaiOptions}
+          />
+        </TerminalFrame>
       </main>
 
       {/* Sidebar Controls */}

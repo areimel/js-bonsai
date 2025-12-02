@@ -6,7 +6,7 @@ export default function Bonsai({ options = {}, className = '', style = {} }) {
   return (
     <div
       ref={containerRef}
-      className={`font-mono bg-black text-white p-4 md:p-6 rounded-lg overflow-hidden w-full max-w-4xl ${className}`}
+      className={`font-mono bg-black text-white p-4 md:p-6 overflow-hidden w-full max-w-4xl ${className}`}
       style={{
         minHeight: '500px',
         maxHeight: '80vh',

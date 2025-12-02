@@ -45,7 +45,7 @@ export default function BonsaiControls({
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-14 bottom-12 right-0 w-72 bg-gray-800 border-l border-gray-700
+          fixed top-14 bottom-12 right-0 w-72 bg-(--bg-secondary) border-l border-(--border)
           transform transition-transform duration-300 ease-in-out z-50
           overflow-y-auto
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}
@@ -55,10 +55,10 @@ export default function BonsaiControls({
         <div className="p-4 space-y-4">
           {/* Header with close button (mobile only) */}
           <div className="flex items-center justify-between md:hidden">
-            <h2 className="text-lg font-semibold text-gray-200">Controls</h2>
+            <h2 className="text-lg font-semibold text-(--text-primary)">Controls</h2>
             <button
               onClick={onToggle}
-              className="p-2 text-gray-400 hover:text-white"
+              className="p-2 text-(--text-muted) hover:text-(--text-primary)"
               aria-label="Close controls"
             >
               <svg
@@ -78,19 +78,19 @@ export default function BonsaiControls({
           </div>
 
           {/* Desktop header */}
-          <h2 className="hidden md:block text-lg font-semibold text-gray-200">
+          <h2 className="hidden md:block text-lg font-semibold text-(--text-primary)">
             Controls
           </h2>
 
           {/* Tree Settings Section */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+            <h3 className="text-sm font-medium text-(--text-muted) uppercase tracking-wide">
               Tree
             </h3>
 
             {/* Life - Number Input */}
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300">Life (Size)</label>
+              <label className="text-sm text-(--text-secondary)">Life (Size)</label>
               <input
                 type="number"
                 min="1"
@@ -99,13 +99,13 @@ export default function BonsaiControls({
                 onChange={(e) =>
                   handleNumberChange('life', e.target.value, 1, 200)
                 }
-                className="w-20 bg-gray-700 text-white text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               />
             </div>
 
             {/* Multiplier - Number Input */}
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300">Density</label>
+              <label className="text-sm text-(--text-secondary)">Density</label>
               <input
                 type="number"
                 min="0"
@@ -114,19 +114,19 @@ export default function BonsaiControls({
                 onChange={(e) =>
                   handleNumberChange('multiplier', e.target.value, 0, 20)
                 }
-                className="w-20 bg-gray-700 text-white text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               />
             </div>
 
             {/* Base Style - Compact Select */}
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300">Base</label>
+              <label className="text-sm text-(--text-secondary)">Base</label>
               <select
                 value={localOptions.base}
                 onChange={(e) =>
                   handleNumberChange('base', e.target.value, 0, 2)
                 }
-                className="w-28 bg-gray-700 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               >
                 <option value="0">None</option>
                 <option value="1">Small Pot</option>
@@ -136,11 +136,11 @@ export default function BonsaiControls({
 
             {/* Color Palette - Compact Select */}
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300">Colors</label>
+              <label className="text-sm text-(--text-secondary)">Colors</label>
               <select
                 value={localOptions.colorPalette}
                 onChange={(e) => handleChange('colorPalette', e.target.value)}
-                className="w-28 bg-gray-700 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               >
                 <option value="default">Green</option>
                 <option value="cherry">Pink</option>
@@ -151,8 +151,8 @@ export default function BonsaiControls({
           </div>
 
           {/* Animation Section */}
-          <div className="space-y-3 pt-2 border-t border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+          <div className="space-y-3 pt-2 border-t border-(--border)">
+            <h3 className="text-sm font-medium text-(--text-muted) uppercase tracking-wide">
               Animation
             </h3>
 
@@ -162,15 +162,15 @@ export default function BonsaiControls({
                 type="checkbox"
                 checked={localOptions.live}
                 onChange={(e) => handleChange('live', e.target.checked)}
-                className="w-4 h-4 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500"
+                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
               />
-              <span className="text-sm text-gray-300">Animate</span>
+              <span className="text-sm text-(--text-secondary)">Animate</span>
             </label>
 
             {/* Animation Speed - Number Input (conditional) */}
             {localOptions.live && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-gray-300">Speed (s)</label>
+                <label className="text-sm text-(--text-secondary)">Speed (s)</label>
                 <input
                   type="number"
                   min="0.001"
@@ -180,7 +180,7 @@ export default function BonsaiControls({
                   onChange={(e) =>
                     handleNumberChange('time', e.target.value, 0.001, 0.1)
                   }
-                  className="w-20 bg-gray-700 text-white text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
                 />
               </div>
             )}
@@ -191,15 +191,15 @@ export default function BonsaiControls({
                 type="checkbox"
                 checked={localOptions.infinite}
                 onChange={(e) => handleChange('infinite', e.target.checked)}
-                className="w-4 h-4 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500"
+                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
               />
-              <span className="text-sm text-gray-300">Infinite</span>
+              <span className="text-sm text-(--text-secondary)">Infinite</span>
             </label>
 
             {/* Wait Time - Number Input (conditional) */}
             {localOptions.infinite && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-gray-300">Wait (s)</label>
+                <label className="text-sm text-(--text-secondary)">Wait (s)</label>
                 <input
                   type="number"
                   min="1"
@@ -209,7 +209,7 @@ export default function BonsaiControls({
                   onChange={(e) =>
                     handleNumberChange('wait', e.target.value, 1, 10)
                   }
-                  className="w-20 bg-gray-700 text-white text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
                 />
               </div>
             )}
@@ -220,33 +220,33 @@ export default function BonsaiControls({
                 type="checkbox"
                 checked={localOptions.screensaver}
                 onChange={(e) => handleChange('screensaver', e.target.checked)}
-                className="w-4 h-4 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500"
+                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
               />
-              <span className="text-sm text-gray-300">Screensaver</span>
+              <span className="text-sm text-(--text-secondary)">Screensaver</span>
             </label>
           </div>
 
           {/* Options Section */}
-          <div className="space-y-3 pt-2 border-t border-gray-700">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+          <div className="space-y-3 pt-2 border-t border-(--border)">
+            <h3 className="text-sm font-medium text-(--text-muted) uppercase tracking-wide">
               Options
             </h3>
 
             {/* Message */}
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Message</label>
+              <label className="block text-sm text-(--text-secondary) mb-1">Message</label>
               <input
                 type="text"
                 value={localOptions.message}
                 onChange={(e) => handleChange('message', e.target.value)}
                 placeholder="Optional"
-                className="w-full bg-gray-700 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent) placeholder:text-(--text-muted)"
               />
             </div>
 
             {/* Seed */}
             <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300">Seed</label>
+              <label className="text-sm text-(--text-secondary)">Seed</label>
               <input
                 type="number"
                 value={localOptions.seed || ''}
@@ -257,7 +257,7 @@ export default function BonsaiControls({
                   )
                 }
                 placeholder="Random"
-                className="w-24 bg-gray-700 text-white text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-24 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent) placeholder:text-(--text-muted)"
               />
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function BonsaiControls({
           {/* Generate Button */}
           <button
             onClick={handleGenerate}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full bg-(--accent) hover:bg-(--accent-hover) text-white font-semibold py-2 px-4 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-(--accent)"
           >
             Generate
           </button>
