@@ -174,21 +174,19 @@ export default function BonsaiControls({
               <span className="text-sm text-(--text-secondary)">Animate</span>
             </label>
 
-            {/* Animation Speed - Number Input (conditional) */}
+            {/* Animation Speed - Dropdown (conditional) */}
             {localOptions.live && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-(--text-secondary)">Speed (s)</label>
-                <input
-                  type="number"
-                  min="0.001"
-                  max="0.1"
-                  step="0.001"
+                <label className="text-sm text-(--text-secondary)">Speed</label>
+                <select
                   value={localOptions.time}
-                  onChange={(e) =>
-                    handleNumberChange('time', e.target.value, 0.001, 0.1)
-                  }
-                  className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
-                />
+                  onChange={(e) => handleChange('time', parseFloat(e.target.value))}
+                  className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
+                >
+                  <option value={0.015}>Fast</option>
+                  <option value={0.03}>Medium</option>
+                  <option value={0.06}>Slow</option>
+                </select>
               </div>
             )}
 
@@ -203,18 +201,18 @@ export default function BonsaiControls({
               <span className="text-sm text-(--text-secondary)">Autoplay</span>
             </label>
 
-            {/* Wait Time - Number Input (conditional) */}
+            {/* Buffer Time - Number Input (conditional) */}
             {localOptions.autoplay && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-(--text-secondary)">Wait (s)</label>
+                <label className="text-sm text-(--text-secondary)">Buffer (s)</label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   max="10"
                   step="0.1"
-                  value={localOptions.wait}
+                  value={localOptions.autoplayBuffer}
                   onChange={(e) =>
-                    handleNumberChange('wait', e.target.value, 1, 10)
+                    handleNumberChange('autoplayBuffer', e.target.value, 0, 10)
                   }
                   className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
                 />

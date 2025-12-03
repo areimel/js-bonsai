@@ -7,6 +7,7 @@
 
 import CONFIG from './config/index.js';
 import { initializeRandomSeed, getRandom } from './utils/random.js';
+import { calculateRenderTime } from './utils/timing.js';
 import { CSSManager } from './modules/css-manager.js';
 import { UIControls } from './modules/ui-controls.js';
 import { Renderer } from './modules/renderer.js';
@@ -41,6 +42,12 @@ export class JSBonsai {
         if (options.infinite || options.screensaver) {
             this.state.options.autoplay = true;
             console.warn('The "infinite" and "screensaver" options are deprecated. Use "autoplay" instead.');
+        }
+
+        // Migrate legacy 'wait' option to 'autoplayBuffer'
+        if (options.wait !== undefined && options.autoplayBuffer === undefined) {
+            this.state.options.autoplayBuffer = options.wait;
+            console.warn('The "wait" option is deprecated. Use "autoplayBuffer" instead.');
         }
 
         // Get container element (support both string ID and direct element reference for React)
@@ -114,9 +121,14 @@ export class JSBonsai {
             this.state.options.time = 0.03; // Default value
         }
 
-        // Ensure wait time is positive
-        if (this.state.options.wait <= 0) {
-            this.state.options.wait = 4.0; // Default value
+        // Ensure autoplayBuffer is non-negative (0 is valid for instant regeneration)
+        if (this.state.options.autoplayBuffer === undefined || this.state.options.autoplayBuffer < 0) {
+            this.state.options.autoplayBuffer = 2.0; // Default value
+        }
+
+        // Warn if autoplayBuffer is unusually large
+        if (this.state.options.autoplayBuffer > 60) {
+            console.warn(`autoplayBuffer is set to ${this.state.options.autoplayBuffer} seconds. This will create long pauses between trees.`);
         }
 
         // Ensure base type exists
@@ -220,6 +232,7 @@ export class JSBonsai {
     /**
      * Grow trees infinitely
      * Extracted from bonsai.js lines 494-508
+     * MODIFIED: Now calculates actual render time to prevent overlapping animations
      */
     growInfinitely() {
         const growLoop = () => {
@@ -227,9 +240,31 @@ export class JSBonsai {
 
             this.growTree();
 
+            // Calculate total wait time: render time + buffer
+            // This prevents overlapping tree generation when animation is longer than old fixed wait time
+            let totalWaitTime;
+
+            if (this.state.options.live) {
+                // In live mode, wait for animation to complete plus buffer time
+                const renderTime = calculateRenderTime(this.state);
+                const bufferTime = this.state.options.autoplayBuffer * 1000; // Convert to ms
+                totalWaitTime = renderTime + bufferTime;
+
+                if (this.state.options.verbose) {
+                    console.log(`Autoplay timing: ${renderTime}ms render + ${bufferTime}ms buffer = ${totalWaitTime}ms total`);
+                }
+            } else {
+                // If live mode is disabled (instant render), only use buffer time
+                totalWaitTime = this.state.options.autoplayBuffer * 1000;
+
+                if (this.state.options.verbose) {
+                    console.log(`Autoplay timing (instant render): ${totalWaitTime}ms buffer`);
+                }
+            }
+
             const timeout = setTimeout(() => {
                 growLoop();
-            }, this.state.options.wait * 1000);
+            }, totalWaitTime);
 
             this.state.timeouts.push(timeout);
         };

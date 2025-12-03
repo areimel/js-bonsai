@@ -16,7 +16,7 @@ function App() {
     live: true,
     time: 0.03,
     autoplay: false,
-    wait: 4.0,
+    autoplayBuffer: 2.0,
     message: '',
     base: 1,
     multiplier: 5,
