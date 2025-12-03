@@ -23,9 +23,8 @@ export class UIControls {
         // Create controls for each option
         this.createCheckboxOption(optionsContainer, 'live', 'Live Mode');
         this.createNumberOption(optionsContainer, 'time', 'Time (seconds)', 0.01, 10, 0.01);
-        this.createCheckboxOption(optionsContainer, 'infinite', 'Infinite Mode');
-        this.createNumberOption(optionsContainer, 'wait', 'Wait Time (seconds)', 0.1, 20, 0.1);
-        this.createCheckboxOption(optionsContainer, 'screensaver', 'Screensaver Mode');
+        this.createCheckboxOption(optionsContainer, 'autoplay', 'Autoplay Mode');
+        this.createNumberOption(optionsContainer, 'autoplayBuffer', 'Buffer Time (seconds)', 0, 20, 0.1);
         this.createTextOption(optionsContainer, 'message', 'Message');
         this.createNumberOption(optionsContainer, 'multiplier', 'Branch Multiplier', 0, 20, 1);
         this.createNumberOption(optionsContainer, 'life', 'Life', 1, 200, 1);

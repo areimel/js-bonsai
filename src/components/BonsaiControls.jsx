@@ -11,6 +11,12 @@ export default function BonsaiControls({
 
   const handleChange = (key, value) => {
     const newOptions = { ...localOptions, [key]: value };
+
+    // Auto-enable live mode when autoplay is enabled
+    if (key === 'autoplay' && value === true) {
+      newOptions.live = true;
+    }
+
     setLocalOptions(newOptions);
     onOptionsChange(newOptions);
   };
@@ -129,8 +135,8 @@ export default function BonsaiControls({
                 className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
               >
                 <option value="0">None</option>
-                <option value="1">Small Pot</option>
-                <option value="2">Large Pot</option>
+                <option value="1">Large Pot</option>
+                <option value="2">Small Pot</option>
               </select>
             </div>
 
@@ -162,68 +168,56 @@ export default function BonsaiControls({
                 type="checkbox"
                 checked={localOptions.live}
                 onChange={(e) => handleChange('live', e.target.checked)}
-                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
+                disabled={localOptions.autoplay}
+                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent) disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <span className="text-sm text-(--text-secondary)">Animate</span>
             </label>
 
-            {/* Animation Speed - Number Input (conditional) */}
+            {/* Animation Speed - Dropdown (conditional) */}
             {localOptions.live && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-(--text-secondary)">Speed (s)</label>
-                <input
-                  type="number"
-                  min="0.001"
-                  max="0.1"
-                  step="0.001"
+                <label className="text-sm text-(--text-secondary)">Speed</label>
+                <select
                   value={localOptions.time}
-                  onChange={(e) =>
-                    handleNumberChange('time', e.target.value, 0.001, 0.1)
-                  }
-                  className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
-                />
+                  onChange={(e) => handleChange('time', parseFloat(e.target.value))}
+                  className="w-28 bg-(--bg-tertiary) text-(--text-primary) rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
+                >
+                  <option value={0.015}>Fast</option>
+                  <option value={0.03}>Medium</option>
+                  <option value={0.06}>Slow</option>
+                </select>
               </div>
             )}
 
-            {/* Infinite Mode - Checkbox */}
+            {/* Autoplay Mode - Checkbox */}
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={localOptions.infinite}
-                onChange={(e) => handleChange('infinite', e.target.checked)}
+                checked={localOptions.autoplay}
+                onChange={(e) => handleChange('autoplay', e.target.checked)}
                 className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
               />
-              <span className="text-sm text-(--text-secondary)">Infinite</span>
+              <span className="text-sm text-(--text-secondary)">Autoplay</span>
             </label>
 
-            {/* Wait Time - Number Input (conditional) */}
-            {localOptions.infinite && (
+            {/* Buffer Time - Number Input (conditional) */}
+            {localOptions.autoplay && (
               <div className="flex items-center justify-between">
-                <label className="text-sm text-(--text-secondary)">Wait (s)</label>
+                <label className="text-sm text-(--text-secondary)">Buffer (s)</label>
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   max="10"
                   step="0.1"
-                  value={localOptions.wait}
+                  value={localOptions.autoplayBuffer}
                   onChange={(e) =>
-                    handleNumberChange('wait', e.target.value, 1, 10)
+                    handleNumberChange('autoplayBuffer', e.target.value, 0, 10)
                   }
                   className="w-20 bg-(--bg-tertiary) text-(--text-primary) text-right rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-(--accent)"
                 />
               </div>
             )}
-
-            {/* Screensaver - Checkbox */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={localOptions.screensaver}
-                onChange={(e) => handleChange('screensaver', e.target.checked)}
-                className="w-4 h-4 accent-(--accent) bg-(--bg-tertiary) border-(--border) rounded focus:ring-(--accent)"
-              />
-              <span className="text-sm text-(--text-secondary)">Screensaver</span>
-            </label>
           </div>
 
           {/* Options Section */}
