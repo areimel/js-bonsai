@@ -69,7 +69,7 @@ function App() {
       <main className="pt-14 pb-12 md:pr-72 min-h-screen flex items-center justify-center p-4">
         <TerminalFrame>
           <Bonsai
-            key={`${regenerateKey}-${JSON.stringify(bonsaiOptions)}`}
+            key={regenerateKey}
             ref={bonsaiRef}
             options={bonsaiOptions}
           />
