@@ -68,7 +68,10 @@ export class CSSManager {
             }
             .${this.classPrefix}visible {
                 opacity: 1;
-                transition: opacity 0.1s ease-in;
+                /* Snap in within ~one frame so each character pops on individually.
+                   Must stay <= the per-character reveal interval (options.time)
+                   or successive characters fade together as a band. */
+                transition: opacity 0.016s linear;
             }
         `;
 
@@ -177,7 +180,10 @@ export class CSSManager {
             }
             .${this.classPrefix}visible {
                 opacity: 1;
-                transition: opacity 0.1s ease-in;
+                /* Snap in within ~one frame so each character pops on individually.
+                   Must stay <= the per-character reveal interval (options.time)
+                   or successive characters fade together as a band. */
+                transition: opacity 0.016s linear;
             }
         `;
 

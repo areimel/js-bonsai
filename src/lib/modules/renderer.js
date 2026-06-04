@@ -138,14 +138,13 @@ export class Renderer {
             }
         }
 
-        // Sort base elements from bottom to top
-        baseElements.sort((a, b) => b.y - a.y);
-
-        // Sort branch elements from bottom to top
-        branchElements.sort((a, b) => b.y - a.y);
-
-        // Sort leaf elements from bottom to top
-        leafElements.sort((a, b) => b.y - a.y);
+        // Typewriter reveal order: bottom row first (grow up), then left-to-right
+        // within each row. The explicit X tiebreaker keeps the typing path
+        // deterministic instead of relying on Array.sort stability.
+        const typingOrder = (a, b) => (b.y - a.y) || (a.x - b.x);
+        baseElements.sort(typingOrder);
+        branchElements.sort(typingOrder);
+        leafElements.sort(typingOrder);
 
         // Combine the phases in order: base -> branches -> leaves
         const animationSequence = [...baseElements, ...branchElements, ...leafElements];
