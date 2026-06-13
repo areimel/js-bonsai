@@ -70,6 +70,27 @@ export function getRandom() {
 }
 
 /**
+ * Roll a die: return an integer in [0, mod).
+ * Exactly one getRandom() call — use this instead of Math.floor(getRandom() * mod)
+ * to keep the random-call sequence transparent.
+ * @param {number} mod - The upper bound (exclusive)
+ * @returns {number} Integer in [0, mod)
+ */
+export function roll(mod) {
+    return Math.floor(getRandom() * mod);
+}
+
+/**
+ * Pick a random element from an array.
+ * Exactly one getRandom() call — equivalent to array[Math.floor(getRandom() * array.length)].
+ * @param {Array} array - The array to pick from
+ * @returns {*} A randomly chosen element
+ */
+export function pickRandom(array) {
+    return array[Math.floor(getRandom() * array.length)];
+}
+
+/**
  * Randomly select a leaf color variant
  * Distribution: 50% base, 25% light, 25% dark
  * @returns {string} 'base', 'light', or 'dark'

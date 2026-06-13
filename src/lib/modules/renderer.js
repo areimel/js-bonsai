@@ -1,7 +1,20 @@
 /**
  * Renderer - handles display rendering and animation
- * Extracted from bonsai.js lines 513-526, 832-857, 414-489
  */
+
+/**
+ * HTML-escape a character for safe innerHTML insertion
+ * @param {string} char - Single character to escape
+ * @returns {string} - HTML-escaped string
+ */
+function escapeHtml(char) {
+    return char
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 export class Renderer {
     constructor(state, config, cssManager) {
@@ -12,7 +25,6 @@ export class Renderer {
 
     /**
      * Initialize the display array based on container size
-     * Extracted from bonsai.js lines 513-526
      */
     initializeDisplay() {
         // Calculate the dimensions based on container size
@@ -42,7 +54,6 @@ export class Renderer {
 
     /**
      * Render the tree to the DOM
-     * Extracted from bonsai.js lines 832-857
      * MODIFIED: Now includes data-cell-id and supports hidden state
      * @param {boolean} hideAll - If true, add 'hidden' class to all cells (for animation)
      */
@@ -55,13 +66,7 @@ export class Renderer {
             for (let x = 0; x < row.length; x++) {
                 const cell = row[x];
                 if (typeof cell === 'object' && cell.char) {
-                    // Make sure to HTML-escape any special characters
-                    const escapedChar = cell.char
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
+                    const escapedChar = escapeHtml(cell.char);
 
                     // Build classes: base classes + hidden state
                     const cellId = this.getCellId(x, y);
@@ -97,20 +102,19 @@ export class Renderer {
     }
 
     /**
-     * Animate tree rendering in three phases: base -> branches -> leaves
-     * MODIFIED: Uses CSS-based reveal instead of innerHTML manipulation
-     * Extracted from bonsai.js lines 414-489
+     * Scan the tree buffer and return three sorted arrays of cell descriptors,
+     * one per animation phase: base, branches, leaves (messages join leaves).
      *
-     * PERFORMANCE: This implementation uses CSS-based animation to avoid DOM thrashing.
-     * Instead of rebuilding innerHTML on every frame, we render once with all characters
-     * hidden, then reveal them by toggling CSS classes. This keeps the DOM structure
-     * stable during animation and leverages GPU-accelerated CSS transitions.
+     * Sort order: bottom row first (grow upward), left-to-right within each row.
+     * The explicit X tiebreaker keeps the typing path deterministic instead of
+     * relying on Array.sort stability.
+     *
+     * BUG FIX: Earlier code used cell.color for categorization, but cell.color is
+     * never set by tree-generator.js. Uses cell.type instead.
+     *
+     * @returns {{ baseElements: Array, branchElements: Array, leafElements: Array }}
      */
-    animateTreeRendering() {
-        // Render the complete tree with all cells hidden
-        this.render(true);
-
-        // Group cells into three categories: base, branches, and leaves
+    groupCellsByType() {
         const baseElements = [];
         const branchElements = [];
         const leafElements = [];
@@ -122,8 +126,6 @@ export class Renderer {
             for (let x = 0; x < cols; x++) {
                 const cell = this.state.tree[y][x];
                 if (typeof cell === 'object' && cell.char && cell.char !== ' ') {
-                    // BUG FIX: Previous implementation used cell.color for categorization, but
-                    // cell.color is never set by tree-generator.js. Changed to use cell.type.
                     if (cell.type === 'base') {
                         baseElements.push({ x, y, cell });
                     } else if (cell.type === 'branch') {
@@ -138,14 +140,25 @@ export class Renderer {
             }
         }
 
-        // Typewriter reveal order: bottom row first (grow up), then left-to-right
-        // within each row. The explicit X tiebreaker keeps the typing path
-        // deterministic instead of relying on Array.sort stability.
+        // Typewriter reveal order: bottom row first (grow up), then left-to-right within each row
         const typingOrder = (a, b) => (b.y - a.y) || (a.x - b.x);
         baseElements.sort(typingOrder);
         branchElements.sort(typingOrder);
         leafElements.sort(typingOrder);
 
+        return { baseElements, branchElements, leafElements };
+    }
+
+    /**
+     * Schedule the timed CSS-reveal for each cell across all three phases.
+     * Phases run in order: base -> branches -> leaves, with a short pause between
+     * each phase for visual effect.
+     *
+     * @param {Array} baseElements
+     * @param {Array} branchElements
+     * @param {Array} leafElements
+     */
+    scheduleReveals(baseElements, branchElements, leafElements) {
         // Combine the phases in order: base -> branches -> leaves
         const animationSequence = [...baseElements, ...branchElements, ...leafElements];
 
@@ -181,5 +194,20 @@ export class Renderer {
 
             this.state.timeouts.push(timeout);
         });
+    }
+
+    /**
+     * Animate tree rendering in three phases: base -> branches -> leaves
+     * MODIFIED: Uses CSS-based reveal instead of innerHTML manipulation
+     *
+     * PERFORMANCE: This implementation uses CSS-based animation to avoid DOM thrashing.
+     * Instead of rebuilding innerHTML on every frame, we render once with all characters
+     * hidden, then reveal them by toggling CSS classes. This keeps the DOM structure
+     * stable during animation and leverages GPU-accelerated CSS transitions.
+     */
+    animateTreeRendering() {
+        this.render(true);
+        const { baseElements, branchElements, leafElements } = this.groupCellsByType();
+        this.scheduleReveals(baseElements, branchElements, leafElements);
     }
 }

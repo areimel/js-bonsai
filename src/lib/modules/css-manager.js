@@ -1,7 +1,18 @@
 /**
- * CSS Manager - handles CSS injection and class generation
- * Extracted from bonsai.js lines 1066-1194
+ * CSS Manager — handles CSS injection and class generation.
+ *
+ * Delegates string building to css/build-styles.js (pure functions, no DOM)
+ * and class computation to css/cell-classes.js (stateless free functions).
+ * This class owns only DOM manipulation and palette state.
  */
+
+import { buildColorCSS, buildGridCSS } from './css/build-styles.js';
+import {
+    getBranchClasses as _getBranchClasses,
+    getBaseClasses   as _getBaseClasses,
+    getLeafClasses   as _getLeafClasses,
+    getMessageClasses as _getMessageClasses,
+} from './css/cell-classes.js';
 
 export class CSSManager {
     constructor(config) {
@@ -12,87 +23,63 @@ export class CSSManager {
         this.cssInjected = false;
     }
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Inject CSS styles into the document
-     * Extracted from bonsai.js lines 1066-1114
+     * Apply a CSS string to a style element.
+     *
+     * Handles the legacy IE styleSheet API (IE 8 and earlier) where
+     * textContent is not available on style elements.
+     *
+     * @param {HTMLStyleElement} styleElement - Target <style> element.
+     * @param {string} css - CSS text to apply.
+     */
+    applyCss(styleElement, css) {
+        if (styleElement.styleSheet) {
+            // IE 8 and earlier
+            styleElement.styleSheet.cssText = css;
+        } else {
+            styleElement.textContent = css;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // CSS injection
+    // -------------------------------------------------------------------------
+
+    /**
+     * Inject base color and visibility styles into the document <head>.
+     *
+     * Guarded by cssInjected so it is safe to call multiple times — only the
+     * first call has any effect.  The style element is given a stable id so
+     * updateColors() can find and replace it later.
      */
     injectCSS() {
         // Don't inject CSS multiple times
         if (this.cssInjected) return;
 
-        // Create a style element
         const style = document.createElement('style');
         style.type = 'text/css';
         style.id = `${this.classPrefix}style`;
 
-        // Build CSS rules
-        let css = `
-            .${this.classPrefix}element {
-                /* Grid positioning applied via inline styles */
-            }
-            .${this.classPrefix}base {
-                color: ${this.colors.base};
-                z-index: 1;
-            }
-            .${this.classPrefix}trunk {
-                color: ${this.colors.trunk};
-                z-index: 2;
-            }
-            .${this.classPrefix}branch {
-                color: ${this.colors.branch};
-                z-index: 2;
-            }
-            .${this.classPrefix}leaf {
-                color: ${this.colors.leaf};
-                z-index: 3;
-            }
-            .${this.classPrefix}leaf-light {
-                color: ${this.colors.leafLight};
-                z-index: 3;
-            }
-            .${this.classPrefix}leaf-dark {
-                color: ${this.colors.leafDark};
-                z-index: 3;
-            }
-            .${this.classPrefix}dirt {
-                color: ${this.colors.dirt};
-            }
-            .${this.classPrefix}grass {
-                color: ${this.colors.grass};
-            }
-            .${this.classPrefix}message {
-                color: ${this.colors.message};
-            }
-            .${this.classPrefix}hidden {
-                opacity: 0;
-            }
-            .${this.classPrefix}visible {
-                opacity: 1;
-                /* Snap in within ~one frame so each character pops on individually.
-                   Must stay <= the per-character reveal interval (options.time)
-                   or successive characters fade together as a band. */
-                transition: opacity 0.016s linear;
-            }
-        `;
+        this.applyCss(style, buildColorCSS(this.classPrefix, this.colors));
 
-        // Add CSS to the style element
-        if (style.styleSheet) {
-            style.styleSheet.cssText = css;
-        } else {
-            style.appendChild(document.createTextNode(css));
-        }
-
-        // Add the style element to the document head
         document.head.appendChild(style);
         this.cssInjected = true;
     }
 
     /**
-     * Inject CSS Grid layout styles for the container
-     * Called after grid dimensions are calculated
-     * @param {string} containerId - ID of the container element
-     * @param {number} rows - Number of grid rows
-     * @param {number} cols - Number of grid columns
+     * Inject CSS Grid layout styles for the tree container.
+     *
+     * Removes any previously injected grid style element before creating a
+     * new one so that dimension changes (e.g. window resize) are reflected
+     * immediately without accumulating stale rules.
+     *
+     * @param {string} containerId - ID of the container element.
+     * @param {number} rows - Number of grid rows.
+     * @param {number} cols - Number of grid columns.
      */
     injectGridStyles(containerId, rows, cols) {
         // Remove old grid styles if they exist
@@ -101,194 +88,74 @@ export class CSSManager {
             oldStyle.remove();
         }
 
-        // Create new style element for grid
         const style = document.createElement('style');
         style.type = 'text/css';
         style.id = `${this.classPrefix}grid-style`;
 
-        // Build grid CSS
-        const css = `
-            #${containerId} {
-                display: grid;
-                grid-template-columns: repeat(${cols}, 1ch);
-                grid-template-rows: repeat(${rows}, 1lh);
-                position: relative;
-            }
-        `;
-
-        // Add CSS
-        if (style.styleSheet) {
-            style.styleSheet.cssText = css;
-        } else {
-            style.textContent = css;
-        }
+        this.applyCss(style, buildGridCSS(containerId, rows, cols));
 
         document.head.appendChild(style);
     }
 
     /**
-     * Update CSS colors dynamically for a new palette
-     * @param {string} paletteName - Name of the palette to apply
+     * Swap the active color palette by rebuilding the canonical ruleset.
+     *
+     * Re-applies the exact same ruleset as injectCSS() — including z-index
+     * layering — so there is no behavioural difference between initial load
+     * and a mid-session palette switch.
+     *
+     * @param {string} paletteName - Key of the palette to activate.
      */
     updateColors(paletteName) {
-        // Get new colors for the palette
-        const newColors = this.config.getColorsForPalette(paletteName);
-        this.colors = newColors;
+        this.colors = this.config.getColorsForPalette(paletteName);
 
-        // Find the existing style element
         const styleElement = document.getElementById(`${this.classPrefix}style`);
         if (!styleElement) {
             console.error('CSS not injected yet - cannot update colors');
             return;
         }
 
-        // Rebuild CSS with new colors (same structure as injectCSS)
-        const css = `
-            .${this.classPrefix}element {
-                display: inline-block;
-                white-space: pre;
-            }
-            .${this.classPrefix}trunk {
-                color: ${this.colors.trunk};
-            }
-            .${this.classPrefix}branch {
-                color: ${this.colors.branch};
-            }
-            .${this.classPrefix}leaf {
-                color: ${this.colors.leaf};
-            }
-            .${this.classPrefix}leaf-light {
-                color: ${this.colors.leafLight};
-            }
-            .${this.classPrefix}leaf-dark {
-                color: ${this.colors.leafDark};
-            }
-            .${this.classPrefix}base {
-                color: ${this.colors.base};
-            }
-            .${this.classPrefix}dirt {
-                color: ${this.colors.dirt};
-            }
-            .${this.classPrefix}grass {
-                color: ${this.colors.grass};
-            }
-            .${this.classPrefix}message {
-                color: ${this.colors.message};
-            }
-            .${this.classPrefix}hidden {
-                opacity: 0;
-            }
-            .${this.classPrefix}visible {
-                opacity: 1;
-                /* Snap in within ~one frame so each character pops on individually.
-                   Must stay <= the per-character reveal interval (options.time)
-                   or successive characters fade together as a band. */
-                transition: opacity 0.016s linear;
-            }
-        `;
-
-        // Update the style element
-        if (styleElement.styleSheet) {
-            styleElement.styleSheet.cssText = css;
-        } else {
-            styleElement.textContent = css;
-        }
+        this.applyCss(styleElement, buildColorCSS(this.classPrefix, this.colors));
     }
 
+    // -------------------------------------------------------------------------
+    // Class name helpers — thin delegates so call sites don't change
+    // -------------------------------------------------------------------------
+
     /**
-     * Get CSS classes for a branch element
-     * Extracted from bonsai.js lines 1123-1159
-     * @param {number} branchType - Type of branch
-     * @param {number} dx - X direction
-     * @param {number} dy - Y direction
-     * @returns {string} - CSS classes for this branch
+     * Get CSS classes for a branch/trunk cell.
+     * @param {number} branchType - Type of branch (see branchTypes enum).
+     * @param {number} dx - Horizontal direction.
+     * @param {number} dy - Vertical direction.
+     * @returns {string} Space-separated CSS class string.
      */
     getBranchClasses(branchType, dx, dy) {
-        let classes = [`${this.classPrefix}element`];
-
-        // Base branch type class
-        if (branchType === this.branchTypes.TRUNK) {
-            classes.push(`${this.classPrefix}trunk`);
-        } else if (branchType === this.branchTypes.SHOOT_LEFT || branchType === this.branchTypes.SHOOT_RIGHT) {
-            classes.push(`${this.classPrefix}branch`);
-        } else if (branchType === this.branchTypes.DYING || branchType === this.branchTypes.DEAD) {
-            classes.push(`${this.classPrefix}leaf`);
-            return classes.join(' '); // Return early for leaves
-        }
-
-        // Add branch subtype
-        if (branchType === this.branchTypes.TRUNK) {
-            classes.push(`${this.classPrefix}trunk-main`);
-        } else if (branchType === this.branchTypes.SHOOT_LEFT) {
-            classes.push(`${this.classPrefix}shoot-left`);
-        } else if (branchType === this.branchTypes.SHOOT_RIGHT) {
-            classes.push(`${this.classPrefix}shoot-right`);
-        }
-
-        // Add direction class
-        if (dy === 0) {
-            classes.push(`${this.classPrefix}horizontal`);
-        } else if (dx < 0 && dy < 0) {
-            classes.push(`${this.classPrefix}left-diagonal`);
-        } else if (dx === 0 && dy < 0) {
-            classes.push(`${this.classPrefix}vertical`);
-        } else if (dx > 0 && dy < 0) {
-            classes.push(`${this.classPrefix}right-diagonal`);
-        } else if (dy > 0) {
-            classes.push(`${this.classPrefix}down`);
-        }
-
-        return classes.join(' ');
+        return _getBranchClasses(this.classPrefix, this.branchTypes, branchType, dx, dy);
     }
 
     /**
-     * Get CSS classes for a base element
-     * Extracted from bonsai.js lines 1166-1178
-     * @param {string} char - The character to check
-     * @returns {string} - CSS classes for this base element
+     * Get CSS classes for a base/pot cell.
+     * @param {string} char - The ASCII character for this cell.
+     * @returns {string} Space-separated CSS class string.
      */
     getBaseClasses(char) {
-        let classes = [`${this.classPrefix}element`];
-
-        if (char === '.' || char === '~') {
-            classes.push(`${this.classPrefix}grass`);
-        } else {
-            classes.push(`${this.classPrefix}base`);
-        }
-
-        return classes.join(' ');
+        return _getBaseClasses(this.classPrefix, char);
     }
 
     /**
-     * Get CSS classes for a leaf element
-     * @param {string} variant - Leaf color variant: 'base', 'light', or 'dark'
-     * @returns {string} - CSS classes for this leaf element
+     * Get CSS classes for a leaf cell.
+     * @param {'base'|'light'|'dark'} variant - Leaf colour variant.
+     * @returns {string} Space-separated CSS class string.
      */
     getLeafClasses(variant = 'base') {
-        let leafClass;
-
-        switch(variant) {
-            case 'light':
-                leafClass = `${this.classPrefix}leaf-light`;
-                break;
-            case 'dark':
-                leafClass = `${this.classPrefix}leaf-dark`;
-                break;
-            case 'base':
-            default:
-                leafClass = `${this.classPrefix}leaf`;
-                break;
-        }
-
-        return `${this.classPrefix}element ${leafClass}`;
+        return _getLeafClasses(this.classPrefix, variant);
     }
 
     /**
-     * Get CSS classes for a message element
-     * Extracted from bonsai.js lines 1192-1194
-     * @returns {string} - CSS classes for this message element
+     * Get CSS classes for a message cell.
+     * @returns {string} Space-separated CSS class string.
      */
     getMessageClasses() {
-        return `${this.classPrefix}element ${this.classPrefix}message`;
+        return _getMessageClasses(this.classPrefix);
     }
 }

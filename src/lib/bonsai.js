@@ -1,5 +1,5 @@
 /**
- * JSBonsai - ASCII Bonsai Tree Generator (Refactored Orchestrator)
+ * JSBonsai - ASCII Bonsai Tree Generator
  * A vanilla JS port of cbonsai (https://gitlab.com/jallbrit/cbonsai)
  *
  * This orchestrator coordinates all modules to generate ASCII bonsai trees
@@ -9,14 +9,12 @@ import CONFIG from './config/index.js';
 import { initializeRandomSeed, getRandom } from './utils/random.js';
 import { calculateRenderTime } from './utils/timing.js';
 import { CSSManager } from './modules/css-manager.js';
-import { UIControls } from './modules/ui-controls.js';
 import { Renderer } from './modules/renderer.js';
 import { TreeGenerator } from './modules/tree-generator.js';
 
 export class JSBonsai {
     /**
      * Constructor for JSBonsai
-     * Extracted from bonsai.js lines 117-151
      * @param {Object} options - Configuration options
      */
     constructor(options = {}) {
@@ -24,11 +22,7 @@ export class JSBonsai {
         this.state = {
             tree: [],                // Display buffer
             timeouts: [],            // Animation handles
-            counters: {              // Growth tracking
-                branches: 0,
-                shoots: 0,
-                shootCounter: 0
-            },
+            counters: this.freshCounters(),  // Growth tracking
             flags: {                 // Status flags
                 isGrowing: false
             },
@@ -84,19 +78,8 @@ export class JSBonsai {
             this.cssManager.colors = CONFIG.getColorsForPalette(this.state.options.colorPalette);
         }
 
-        this.uiControls = new UIControls(this.state.options, {
-            onReset: () => this.reset(),
-            onClearTimeouts: () => this.clearTimeouts(),
-            onStart: () => this.start(),
-            onPaletteChange: (paletteName) => this.changePalette(paletteName)
-        });
         this.renderer = new Renderer(this.state, CONFIG, this.cssManager);
         this.treeGenerator = new TreeGenerator(this.state, CONFIG, this.cssManager);
-
-        // Create UI if verbose mode is enabled
-        if (this.state.options.verbose) {
-            this.uiControls.createUI();
-        }
 
         // Inject CSS
         this.cssManager.injectCSS();
@@ -106,8 +89,16 @@ export class JSBonsai {
     }
 
     /**
+     * Fresh growth counters. shootCounter seeds the left/right shoot alternation.
+     * @param {number} shootCounter - Starting value for shoot direction alternation
+     * @returns {{ branches: number, shoots: number, shootCounter: number }}
+     */
+    freshCounters(shootCounter = 0) {
+        return { branches: 0, shoots: 0, shootCounter };
+    }
+
+    /**
      * Validate options to ensure they're within acceptable ranges
-     * Extracted from bonsai.js lines 156-177
      */
     validateOptions() {
         // Ensure multiplier is within bounds (0-20)
@@ -139,7 +130,6 @@ export class JSBonsai {
 
     /**
      * Start growing the tree
-     * Extracted from bonsai.js lines 200-206
      */
     start() {
         if (this.state.options.autoplay) {
@@ -152,7 +142,6 @@ export class JSBonsai {
 
     /**
      * Reset the tree state
-     * Extracted from bonsai.js lines 342-347
      */
     reset() {
         // Clear the tree array and container
@@ -163,7 +152,6 @@ export class JSBonsai {
 
     /**
      * Clear all active timeouts
-     * Extracted from bonsai.js lines 352-355
      */
     clearTimeouts() {
         this.state.timeouts.forEach(timeout => clearTimeout(timeout));
@@ -172,19 +160,14 @@ export class JSBonsai {
 
     /**
      * Grow a single tree
-     * Extracted from bonsai.js lines 360-409
      * CRITICAL: Math.random() replaced with getRandom()
      */
     growTree() {
         this.state.flags.isGrowing = true;
         this.reset();
 
-        // Reset counters
-        this.state.counters = {
-            branches: 0,
-            shoots: 0,
-            shootCounter: Math.floor(getRandom() * 100) // Random starting counter to vary shoot directions
-        };
+        // Reset counters with a random starting counter to vary shoot directions
+        this.state.counters = this.freshCounters(Math.floor(getRandom() * 100));
 
         // Initialize the display area
         this.renderer.initializeDisplay();
@@ -231,7 +214,6 @@ export class JSBonsai {
 
     /**
      * Grow trees infinitely
-     * Extracted from bonsai.js lines 494-508
      * MODIFIED: Now calculates actual render time to prevent overlapping animations
      */
     growInfinitely() {

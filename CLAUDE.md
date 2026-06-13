@@ -29,10 +29,12 @@ pnpm lint
 The codebase follows an **orchestrator pattern** where `JSBonsai` (src/lib/bonsai.js) coordinates specialized modules:
 
 - **JSBonsai** (orchestrator): Manages lifecycle, coordinates modules, handles shared state
-- **TreeGenerator** (src/lib/modules/tree-generator.js): Recursive tree growth algorithms, branch/leaf placement
+- **TreeGenerator** (src/lib/modules/tree-generator.js): Recursive tree growth algorithm; delegates to submodules in src/lib/modules/tree/ (deltas.js for direction math, branch-chars.js for character selection, leaves.js for leaf cluster placement)
 - **Renderer** (src/lib/modules/renderer.js): DOM rendering, CSS-based animation sequencing
-- **CSSManager** (src/lib/modules/css-manager.js): Dynamic CSS injection, color palette management
-- **UIControls** (src/lib/modules/ui-controls.js): Legacy vanilla UI controls (not used in React app)
+- **CSSManager** (src/lib/modules/css-manager.js): Stylesheet lifecycle; pure CSS string builders and class-name lookups live in src/lib/modules/css/ (build-styles.js, cell-classes.js)
+- Shared low-level helpers live in src/lib/utils/ (random.js, grid.js, timing.js)
+
+**See src/lib/MANIFEST.md** for the full table of contents of the lib files: every file, its purpose, key exports, dependencies, and library invariants. Keep it updated when adding/moving lib files.
 
 ### Shared State Object
 
